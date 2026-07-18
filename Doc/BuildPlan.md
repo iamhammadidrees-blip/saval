@@ -322,54 +322,37 @@ exportSnapshot(): BackupSnapshot / importSnapshot(snapshot) (validate version ==
 
 All functions are browser-only; guard against SSR (typeof window === "undefined" → no-op / throw clear error).
 
+------------------------------------------------
 Step 1.7 — Zustand store (store/useAppStore.ts)
 
 State:
 
-
-
-
-
 files: UploadedFile[]
-
-
 
 pendingParts: PendingPart[]
 
-
-
 isLoading: boolean
-
-
 
 isHydrated: boolean
 
 
-
-lastUpdated: string | null
+lastupdated: string | null
 
 Actions:
-
-
-
 
 
 hydrate() — set loading → load both stores from IndexedDB → set state → isHydrated = true
 
 
-
 upsertFile(file, parts) — stub for Phase 1: write to IDB then update state (real replace logic lands in Phase 2; for now just replace-by-fileName in memory+IDB so shell can be wired later)
 
-
-
 removeFile(fileName) — call deleteByFileName, refresh state
-
-
 
 clearAll() — wipe IDB + reset state
 
 Wire: in a client Dashboard (or hooks/usePendingData.ts), useEffect(() => { hydrate() }, []) on mount.
 
+-------------------------------------------------------------
 Step 1.8 — Dashboard shell UI
 
 Replace starter content in app/page.tsx with a client dashboard composition:
@@ -379,20 +362,15 @@ Replace starter content in app/page.tsx with a client dashboard composition:
 Header — app title "Pending Parts Dashboard", last-updated text (from store), placeholder action buttons (Export / Backup disabled or no-ops until Phase 2/3).
 
 
-
 SummaryCards — four cards reading from store (will be 0 until Phase 2):
 
 
 Total Pending rows
 
-
-
 Total Qty (sum of quantity)
 
 
-
 Unique Parts (distinct partNumber/partName)
-
 
 
 Files Uploaded (files.length)
@@ -402,20 +380,16 @@ Files Uploaded (files.length)
 FileDropzone — react-dropzone, accept .xlsx,.xls, multiple files. Phase 1 behavior: on drop, toast "N file(s) received — parsing comes in Phase 2" (or console.log). Do not call ExcelJS yet.
 
 
-
 DashboardTabs — shadcn Tabs with two panels:
-
 
 Pending → PendingTable placeholder (empty state: "Upload File A to see pending parts")
 
 
-
 Required → RequiredTable placeholder (same empty state)
-
-
 
 Layout: single column on mobile, full-width content area, light professional industrial look (no purple/cream AI defaults). Keep it simple — polish visuals later.
 
+----------------------------------------------------------
 Step 1.9 — Smoke verify (Phase 1 done checklist)
 
 
