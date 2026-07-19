@@ -72,43 +72,15 @@ export const QUANTITY_FIELD = [
   "affected quantity",
 ] as const;
 
-/**
- * Common Excel ARGB/RGB fills. These exact values are calibration anchors;
- * the color helpers below also tolerate nearby shades.
- */
+/** Exact RGB fills calibrated from the client's File A workbook. */
 export const PENDING_COLORS = {
-  orange: [
-    "FFFFA500",
-    "FFF4B183",
-    "FFED7D31",
-    "FFFFC000",
-    "FFF8CBAD",
-  ],
-  yellow: [
-    "FFFFFF00",
-    "FFFFD966",
-    "FFFFE699",
-    "FFFFF2CC",
-    "FFFFEB9C",
-  ],
-  lightGreen: [
-    "FFC6E0B4",
-    "FFE2F0D9",
-    "FFA9D18E",
-    "FF92D050",
-    "FFC6EFCE",
-  ],
+  orange: ["FFFFC000"],
+  yellow: ["FFFFFF00"],
+  lightGreen: ["FFA9D08E"],
 } as const;
 
-/** Only strong pure/dark greens are resolved; light greens are pending. */
-export const RESOLVED_COLORS = [
-  "FF00FF00",
-  "FF00B050",
-  "FF008000",
-  "FF006100",
-  "FF006400",
-  "FF004D00",
-] as const;
+/** The client's resolved status fill: RGB #92D050. */
+export const RESOLVED_COLORS = ["FF92D050"] as const;
 
 export const PENDING_KEYWORDS: readonly StatusKeyword[] = [
   "under observation",
@@ -135,47 +107,6 @@ function normalizeArgb(argb: string | undefined): string {
   return "";
 }
 
-interface HslColor {
-  hue: number;
-  saturation: number;
-  lightness: number;
-}
-
-function toHsl(argb: string | undefined): HslColor | null {
-  const rgb = normalizeArgb(argb);
-  if (!rgb) return null;
-
-  const red = Number.parseInt(rgb.slice(0, 2), 16) / 255;
-  const green = Number.parseInt(rgb.slice(2, 4), 16) / 255;
-  const blue = Number.parseInt(rgb.slice(4, 6), 16) / 255;
-  const maximum = Math.max(red, green, blue);
-  const minimum = Math.min(red, green, blue);
-  const delta = maximum - minimum;
-  const lightness = (maximum + minimum) / 2;
-
-  if (delta === 0) {
-    return { hue: 0, saturation: 0, lightness };
-  }
-
-  const saturation =
-    delta / (1 - Math.abs(2 * lightness - 1));
-  let hue: number;
-
-  if (maximum === red) {
-    hue = 60 * (((green - blue) / delta) % 6);
-  } else if (maximum === green) {
-    hue = 60 * ((blue - red) / delta + 2);
-  } else {
-    hue = 60 * ((red - green) / delta + 4);
-  }
-
-  return {
-    hue: hue < 0 ? hue + 360 : hue,
-    saturation,
-    lightness,
-  };
-}
-
 function matchesExactColor(
   argb: string | undefined,
   colors: readonly string[],
@@ -188,67 +119,20 @@ function matchesExactColor(
 }
 
 export function isOrangeLike(argb: string | undefined): boolean {
-  if (matchesExactColor(argb, PENDING_COLORS.orange)) return true;
-
-  const color = toHsl(argb);
-  return (
-    color !== null &&
-    color.hue >= 15 &&
-    color.hue <= 45 &&
-    color.saturation >= 0.35 &&
-    color.lightness >= 0.35
-  );
+  return matchesExactColor(argb, PENDING_COLORS.orange);
 }
 
 export function isYellowLike(argb: string | undefined): boolean {
-  if (matchesExactColor(argb, PENDING_COLORS.yellow)) return true;
-
-  const color = toHsl(argb);
-  return (
-    color !== null &&
-    color.hue > 45 &&
-    color.hue <= 70 &&
-    color.saturation >= 0.25 &&
-    color.lightness >= 0.55
-  );
+  return matchesExactColor(argb, PENDING_COLORS.yellow);
 }
 
-/**
- * Returns true only for resolved pure/dark green.
- * It deliberately excludes pale and light green fills.
- */
+/** Returns true only for the client's resolved green (#92D050). */
 export function isGreenLike(argb: string | undefined): boolean {
-  if (matchesExactColor(argb, RESOLVED_COLORS)) return true;
-
-  const color = toHsl(argb);
-  if (
-    color === null ||
-    color.hue < 75 ||
-    color.hue > 155 ||
-    color.saturation < 0.3
-  ) {
-    return false;
-  }
-
-  const isDarkGreen = color.lightness <= 0.42;
-  const isPureGreen =
-    color.saturation >= 0.75 && color.lightness <= 0.58;
-
-  return isDarkGreen || isPureGreen;
+  return matchesExactColor(argb, RESOLVED_COLORS);
 }
 
 export function isLightGreenLike(argb: string | undefined): boolean {
-  if (matchesExactColor(argb, PENDING_COLORS.lightGreen)) return true;
-  if (isGreenLike(argb)) return false;
-
-  const color = toHsl(argb);
-  return (
-    color !== null &&
-    color.hue >= 75 &&
-    color.hue <= 155 &&
-    color.saturation >= 0.15 &&
-    color.lightness >= 0.43
-  );
+  return matchesExactColor(argb, PENDING_COLORS.lightGreen);
 }
 
 export function isPendingColor(argb: string | undefined): boolean {
