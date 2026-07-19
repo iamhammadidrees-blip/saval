@@ -5,6 +5,10 @@ import {
   HEADER_MARKERS,
   STATUS_COLUMN_RULE,
   STATUS_HEADER_HINTS,
+  isGreenLike,
+  isLightGreenLike,
+  isOrangeLike,
+  isYellowLike,
   normalizeHeader,
   type ParserFieldKey,
 } from "@/constants/parserConfig";
@@ -20,6 +24,33 @@ export interface HeaderDetectionResult {
   statusColumnIndexes: number[];
   statusHeaders: Map<number, string>;
   latestStatusColumnIndex: number;
+}
+
+export type StatusColor =
+  | "orange"
+  | "yellow"
+  | "lightgreen"
+  | "green"
+  | "none";
+
+export interface RawParsedRow {
+  partName: string;
+  partNumber?: string;
+  batch?: string;
+  date?: string;
+  quantity: number;
+  status: string;
+  color?: StatusColor;
+  statusDate?: string;
+  remarks?: string;
+  handlingMethod?: string;
+}
+
+export interface ParseResult {
+  fileName: string;
+  totalRows: number;
+  rows: RawParsedRow[];
+  errors: string[];
 }
 
 /**
@@ -180,5 +211,153 @@ export function findHeaderRow(
     statusColumnIndexes,
     statusHeaders,
     latestStatusColumnIndex,
+  };
+}
+
+function optionalText(cell: Cell | undefined): string | undefined {
+  const text = cell?.text.trim() ?? "";
+  return text || undefined;
+}
+
+function readQuantity(cell: Cell | undefined): number | null {
+  if (!cell) return null;
+
+  if (typeof cell.value === "number" && Number.isFinite(cell.value)) {
+    return cell.value;
+  }
+
+  if (typeof cell.result === "number" && Number.isFinite(cell.result)) {
+    return cell.result;
+  }
+
+  const normalized = cell.text.replace(/,/g, "").trim();
+  if (!normalized) return null;
+
+  const quantity = Number(normalized);
+  return Number.isFinite(quantity) ? quantity : null;
+}
+
+function readFillArgb(cell: Cell): string | undefined {
+  if (cell.fill.type !== "pattern") return undefined;
+  return cell.fill.fgColor?.argb;
+}
+
+function statusColorFromArgb(argb: string | undefined): StatusColor {
+  if (isOrangeLike(argb)) return "orange";
+  if (isYellowLike(argb)) return "yellow";
+  if (isLightGreenLike(argb)) return "lightgreen";
+  if (isGreenLike(argb)) return "green";
+  return "none";
+}
+
+function columnsByField(
+  columnMap: Map<number, ParserFieldKey>,
+): Map<ParserFieldKey, number> {
+  const result = new Map<ParserFieldKey, number>();
+
+  for (const [columnNumber, fieldKey] of columnMap) {
+    result.set(fieldKey, columnNumber);
+  }
+
+  return result;
+}
+
+export function parseWorksheetRows(
+  worksheet: Worksheet,
+  header: HeaderDetectionResult,
+): Pick<ParseResult, "totalRows" | "rows" | "errors"> {
+  const fields = columnsByField(header.columnMap);
+  const rows: RawParsedRow[] = [];
+  const errors: string[] = [];
+  let totalRows = 0;
+
+  const cellForField = (
+    rowNumber: number,
+    fieldKey: ParserFieldKey,
+  ): Cell | undefined => {
+    const columnNumber = fields.get(fieldKey);
+    return columnNumber
+      ? worksheet.getCell(rowNumber, columnNumber)
+      : undefined;
+  };
+
+  for (
+    let rowNumber = header.headerRowNumber + 1;
+    rowNumber <= worksheet.rowCount;
+    rowNumber += 1
+  ) {
+    const row = worksheet.getRow(rowNumber);
+    if (!row.hasValues) continue;
+
+    totalRows += 1;
+
+    const partName = optionalText(
+      cellForField(rowNumber, "partName"),
+    );
+    const partNumber = optionalText(
+      cellForField(rowNumber, "partNumber"),
+    );
+
+    if (!partName && !partNumber) {
+      errors.push(
+        `Row ${rowNumber}: skipped because Part No. and Part Name are empty.`,
+      );
+      continue;
+    }
+
+    const quantityCell = cellForField(rowNumber, "quantity");
+    const parsedQuantity = readQuantity(quantityCell);
+
+    if (
+      parsedQuantity === null &&
+      (quantityCell?.text.trim() ?? "") !== ""
+    ) {
+      errors.push(
+        `Row ${rowNumber}: invalid Affected Qty; defaulted to 0.`,
+      );
+    }
+
+    const statusCell = worksheet.getCell(
+      rowNumber,
+      header.latestStatusColumnIndex,
+    );
+    const fillArgb = readFillArgb(statusCell);
+
+    rows.push({
+      partName: partName ?? "",
+      partNumber,
+      batch: optionalText(cellForField(rowNumber, "batch")),
+      date: optionalText(cellForField(rowNumber, "date")),
+      quantity: parsedQuantity ?? 0,
+      status: statusCell.text.trim(),
+      color: statusColorFromArgb(fillArgb),
+      statusDate:
+        header.statusHeaders.get(header.latestStatusColumnIndex) ||
+        undefined,
+      remarks: optionalText(cellForField(rowNumber, "remarks")),
+      handlingMethod: optionalText(
+        cellForField(rowNumber, "handlingMethod"),
+      ),
+    });
+  }
+
+  return { totalRows, rows, errors };
+}
+
+/**
+ * Public File A parser entry point.
+ * It loads the workbook, discovers its columns, then reads unfiltered rows.
+ */
+export async function parseFileA(
+  buffer: ArrayBuffer,
+  fileName: string,
+): Promise<ParseResult> {
+  const worksheet = await loadFileAWorksheet(buffer);
+  const header = findHeaderRow(worksheet);
+  const parsed = parseWorksheetRows(worksheet, header);
+
+  return {
+    fileName,
+    ...parsed,
   };
 }
