@@ -2,23 +2,21 @@
 
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { toast } from "sonner";
 import { FileSpreadsheet, Upload } from "lucide-react";
 
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { cn } from "@/lib/utils";
 
 export function FileDropzone() {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
+  const uploadFiles = useFileUpload();
 
-    // Phase 1: acknowledge only — ExcelJS parsing lands in Phase 2.
-    toast.info(
-      `${acceptedFiles.length} file(s) received — parsing comes in Phase 2`,
-      {
-        description: acceptedFiles.map((file) => file.name).join(", "),
-      },
-    );
-  }, []);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
+      void uploadFiles(acceptedFiles);
+    },
+    [uploadFiles],
+  );
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } =
     useDropzone({
