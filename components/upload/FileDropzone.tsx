@@ -1,27 +1,19 @@
 "use client";
 
-import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { FileSpreadsheet, Upload } from "lucide-react";
+import { FileSpreadsheet, Loader2, Upload } from "lucide-react";
 
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { cn } from "@/lib/utils";
 
 export function FileDropzone() {
-  const uploadFiles = useFileUpload();
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return;
-      void uploadFiles(acceptedFiles);
-    },
-    [uploadFiles],
-  );
+  const { onDrop, isParsing } = useFileUpload();
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } =
     useDropzone({
       onDrop,
       multiple: true,
+      disabled: isParsing,
       accept: {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
           ".xlsx",
@@ -35,15 +27,27 @@ export function FileDropzone() {
       <div
         {...getRootProps({
           className: cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-card px-6 py-10 text-center transition-colors",
-            isDragActive
+            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-card px-6 py-10 text-center transition-colors",
+            isParsing
+              ? "cursor-wait border-primary/40 bg-primary/5 opacity-80"
+              : "cursor-pointer",
+            !isParsing && isDragActive
               ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50 hover:bg-muted/50",
+              : !isParsing &&
+                  "border-border hover:border-primary/50 hover:bg-muted/50",
           ),
         })}
       >
         <input {...getInputProps()} />
-        {isDragActive ? (
+        {isParsing ? (
+          <>
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm font-medium">Parsing Excel file(s)…</p>
+            <p className="text-xs text-muted-foreground">
+              Filtering pending rows and updating the dashboard
+            </p>
+          </>
+        ) : isDragActive ? (
           <>
             <FileSpreadsheet className="size-8 text-primary" />
             <p className="text-sm font-medium">Drop the Excel files here</p>

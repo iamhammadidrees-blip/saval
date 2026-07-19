@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -22,51 +22,62 @@ function errorMessage(error: unknown): string {
  */
 export function useFileUpload() {
   const upsertFile = useAppStore((state) => state.upsertFile);
+  const [isParsing, setIsParsing] = useState(false);
 
-  return useCallback(
+  const onDrop = useCallback(
     async (files: File[]): Promise<void> => {
-      for (const file of files) {
-        try {
-          const wasReplacement = useAppStore
-            .getState()
-            .files.some(
-              (existingFile) =>
-                existingFile.fileName === file.name,
+      if (files.length === 0 || isParsing) return;
+
+      setIsParsing(true);
+
+      try {
+        for (const file of files) {
+          try {
+            const wasReplacement = useAppStore
+              .getState()
+              .files.some(
+                (existingFile) =>
+                  existingFile.fileName === file.name,
+              );
+
+            const buffer = await file.arrayBuffer();
+            const parsed = await parseFileA(buffer, file.name);
+            const pendingRows = filterPending(parsed.rows);
+            const pendingParts = toPendingParts(
+              pendingRows,
+              file.name,
             );
+            const uploadedFile: UploadedFile = {
+              fileName: file.name,
+              uploadedAt: new Date().toISOString(),
+              rowCount: pendingParts.length,
+              status: "active",
+            };
 
-          const buffer = await file.arrayBuffer();
-          const parsed = await parseFileA(buffer, file.name);
-          const pendingRows = filterPending(parsed.rows);
-          const pendingParts = toPendingParts(
-            pendingRows,
-            file.name,
-          );
-          const uploadedFile: UploadedFile = {
-            fileName: file.name,
-            uploadedAt: new Date().toISOString(),
-            rowCount: pendingParts.length,
-            status: "active",
-          };
+            await upsertFile(uploadedFile, pendingParts);
 
-          await upsertFile(uploadedFile, pendingParts);
-
-          toast.success(
-            `${file.name}: ${parsed.totalRows} rows → ${pendingParts.length} pending${
-              wasReplacement ? " (replaced previous)" : ""
-            }`,
-            parsed.errors.length > 0
-              ? {
-                  description: `${parsed.errors.length} parser warning(s).`,
-                }
-              : undefined,
-          );
-        } catch (error) {
-          toast.error(`${file.name}: upload failed`, {
-            description: errorMessage(error),
-          });
+            toast.success(
+              `${file.name}: ${parsed.totalRows} rows → ${pendingParts.length} pending${
+                wasReplacement ? " (replaced previous)" : ""
+              }`,
+              parsed.errors.length > 0
+                ? {
+                    description: `${parsed.errors.length} parser warning(s).`,
+                  }
+                : undefined,
+            );
+          } catch (error) {
+            toast.error(`${file.name}: upload failed`, {
+              description: errorMessage(error),
+            });
+          }
         }
+      } finally {
+        setIsParsing(false);
       }
     },
-    [upsertFile],
+    [isParsing, upsertFile],
   );
+
+  return { onDrop, isParsing };
 }
