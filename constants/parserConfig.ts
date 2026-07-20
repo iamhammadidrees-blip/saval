@@ -3,9 +3,7 @@ export type ParserFieldKey =
   | "partName"
   | "batch"
   | "date"
-  | "quantity"
-  | "remarks"
-  | "handlingMethod";
+  | "quantity";
 
 export type StatusKeyword = string | RegExp;
 
@@ -31,12 +29,6 @@ export const HEADER_ALIASES = {
   "affected qty": "quantity",
   "affected qty.": "quantity",
   "affected quantity": "quantity",
-  remarks: "remarks",
-  remark: "remarks",
-  comments: "remarks",
-  "handling method": "handlingMethod",
-  "handling method.": "handlingMethod",
-  handling: "handlingMethod",
 } as const satisfies Readonly<Record<string, ParserFieldKey>>;
 
 /** Both markers should normally be present on the real header row. */

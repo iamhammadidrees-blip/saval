@@ -41,9 +41,6 @@ export interface RawParsedRow {
   quantity: number;
   status: string;
   color?: StatusColor;
-  statusDate?: string;
-  remarks?: string;
-  handlingMethod?: string;
 }
 
 export interface ParseResult {
@@ -338,13 +335,6 @@ export function parseWorksheetRows(
       quantity: parsedQuantity ?? 0,
       status: statusCell.text.trim(),
       color: statusColorFromArgb(fillArgb),
-      statusDate:
-        header.statusHeaders.get(header.latestStatusColumnIndex) ||
-        undefined,
-      remarks: optionalText(cellForField(rowNumber, "remarks")),
-      handlingMethod: optionalText(
-        cellForField(rowNumber, "handlingMethod"),
-      ),
     });
   }
 

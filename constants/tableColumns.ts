@@ -79,26 +79,6 @@ export function createPendingColumns(): ColumnDef<PendingPart>[] {
         );
       },
     },
-    {
-      accessorKey: "statusDate",
-      header: "Status Date",
-      cell: ({ row }) => displayText(row.original.statusDate),
-    },
-    {
-      accessorKey: "handlingMethod",
-      header: "Handling",
-      cell: ({ row }) => displayText(row.original.handlingMethod),
-    },
-    {
-      accessorKey: "remarks",
-      header: "Remarks",
-      cell: ({ row }) => displayText(row.original.remarks),
-    },
-    {
-      accessorKey: "fileName",
-      header: "Source File",
-      cell: ({ row }) => displayText(row.original.fileName),
-    },
   ];
 }
 

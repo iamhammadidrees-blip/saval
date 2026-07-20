@@ -16,10 +16,6 @@ export interface PendingPart {
   status: string;
   /** e.g. "orange" | "yellow" | "lightgreen" | ... */
   color?: string;
-  /** Header text of the latest status column */
-  statusDate?: string;
-  remarks?: string;
-  handlingMethod?: string;
   processedAt: string;
 }
 

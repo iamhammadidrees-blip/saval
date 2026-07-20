@@ -9,10 +9,6 @@ const PENDING_HEADERS = [
   "Part Name",
   "Qty",
   "Status",
-  "Status Date",
-  "Handling",
-  "Remarks",
-  "Source File",
 ] as const;
 
 const PENDING_SHEET_NAME = "Pending Parts";
@@ -136,10 +132,6 @@ async function buildPendingPartsWorkbook(
       part.partName,
       part.quantity,
       part.status,
-      part.statusDate ?? "",
-      part.handlingMethod ?? "",
-      part.remarks ?? "",
-      part.fileName,
     ]);
 
     const colorKey = (part.color ?? "").toLowerCase();
@@ -160,10 +152,6 @@ async function buildPendingPartsWorkbook(
     { width: 14 },
     { width: 32 },
     { width: 8 },
-    { width: 28 },
-    { width: 14 },
-    { width: 18 },
-    { width: 24 },
     { width: 28 },
   ];
 

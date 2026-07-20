@@ -82,9 +82,6 @@ export function toPendingParts(
     quantity: Number.isFinite(row.quantity) ? row.quantity : 0,
     status: row.status,
     color: row.color,
-    statusDate: row.statusDate,
-    remarks: row.remarks,
-    handlingMethod: row.handlingMethod,
     processedAt,
   }));
 }
