@@ -26,8 +26,6 @@ export interface RequiredPart {
   partNumber?: string;
   totalQuantity: number;
   countInPending: number;
-  filesInvolved: string[];
-  lastUpdated: string;
 }
 
 export interface BackupSnapshot {

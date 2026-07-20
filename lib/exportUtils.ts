@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 
 import type { PendingPart, RequiredPart } from "@/lib/types";
+import { toShortDate } from "@/lib/utils";
 
 const PENDING_HEADERS = [
   "Date",
@@ -25,8 +26,6 @@ const FILE_B_HEADERS = [
   "Part Name",
   "Total Qty",
   "Count in Pending",
-  "Files Involved",
-  "Last Updated",
 ] as const;
 
 const FILE_B_SHEET_NAME = "Required Parts";
@@ -50,15 +49,6 @@ export function getRequiredPartsFileBFileName(
 export function getPendingPartsFileName(date: Date = new Date()): string {
   const isoDate = date.toISOString().slice(0, 10);
   return `Pending_Parts_${isoDate}.xlsx`;
-}
-
-function formatLastUpdated(value: string): string {
-  if (!value.trim()) return "";
-
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return value;
-
-  return new Date(parsed).toLocaleString();
 }
 
 function triggerDownload(blob: Blob, fileName: string): void {
@@ -86,8 +76,6 @@ async function buildRequiredPartsWorkbook(
       part.partName,
       part.totalQuantity,
       part.countInPending,
-      part.filesInvolved.join(", "),
-      formatLastUpdated(part.lastUpdated),
     ]);
   }
 
@@ -96,8 +84,6 @@ async function buildRequiredPartsWorkbook(
     { width: 32 },
     { width: 12 },
     { width: 18 },
-    { width: 42 },
-    { width: 22 },
   ];
 
   return workbook;
@@ -126,7 +112,7 @@ async function buildPendingPartsWorkbook(
 
   for (const part of parts) {
     const row = worksheet.addRow([
-      part.date ?? "",
+      toShortDate(part.date) ?? "",
       part.batch ?? "",
       part.partNumber ?? "",
       part.partName,

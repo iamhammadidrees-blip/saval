@@ -12,6 +12,7 @@ import {
   normalizeHeader,
   type ParserFieldKey,
 } from "@/constants/parserConfig";
+import { toShortDate } from "@/lib/utils";
 
 const IGNORED_WORKSHEET_NODES = ["drawing", "picture"] as const;
 const HEADER_SCAN_LIMIT = 30;
@@ -223,6 +224,29 @@ function optionalText(cell: Cell | undefined): string | undefined {
   return text || undefined;
 }
 
+/** Stores only a short calendar date: "Fri Jan 31 2025" (no time/timezone). */
+function readDate(cell: Cell | undefined): string | undefined {
+  if (!cell) return undefined;
+
+  if (cell.value instanceof Date) {
+    return toShortDate(cell.value);
+  }
+
+  if (cell.result instanceof Date) {
+    return toShortDate(cell.result);
+  }
+
+  if (typeof cell.value === "number") {
+    return toShortDate(cell.value);
+  }
+
+  if (typeof cell.result === "number") {
+    return toShortDate(cell.result);
+  }
+
+  return toShortDate(cell.text);
+}
+
 function readQuantity(cell: Cell | undefined): number | null {
   if (!cell) return null;
 
@@ -331,7 +355,7 @@ export function parseWorksheetRows(
       partName: partName ?? "",
       partNumber,
       batch: optionalText(cellForField(rowNumber, "batch")),
-      date: optionalText(cellForField(rowNumber, "date")),
+      date: readDate(cellForField(rowNumber, "date")),
       quantity: parsedQuantity ?? 0,
       status: statusCell.text.trim(),
       color: statusColorFromArgb(fillArgb),

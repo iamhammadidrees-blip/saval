@@ -7,6 +7,7 @@ import {
 } from "@/constants/parserConfig";
 import type { RawParsedRow } from "@/lib/excelParser";
 import type { PendingPart, RequiredPart } from "@/lib/types";
+import { toShortDate } from "@/lib/utils";
 
 const PENDING_STATUS_COLORS = new Set([
   "orange",
@@ -78,28 +79,12 @@ export function toPendingParts(
     partName: row.partName,
     partNumber: row.partNumber,
     batch: row.batch,
-    date: row.date,
+    date: toShortDate(row.date),
     quantity: Number.isFinite(row.quantity) ? row.quantity : 0,
     status: row.status,
     color: row.color,
     processedAt,
   }));
-}
-
-function latestTimestamp(
-  current: string,
-  candidate: string,
-): string {
-  if (!candidate) return current;
-  if (!current) return candidate;
-
-  const currentTime = Date.parse(current);
-  const candidateTime = Date.parse(candidate);
-
-  if (Number.isNaN(currentTime)) return candidate;
-  if (Number.isNaN(candidateTime)) return current;
-
-  return candidateTime > currentTime ? candidate : current;
 }
 
 interface RequiredAccumulator {
@@ -108,8 +93,6 @@ interface RequiredAccumulator {
   partNumber?: string;
   totalQuantity: number;
   countInPending: number;
-  filesInvolved: Set<string>;
-  lastUpdated: string;
 }
 
 /**
@@ -127,7 +110,6 @@ export function aggregateRequired(
 
     if (!groupKey) continue;
 
-    const timestamp = part.processedAt || part.date || "";
     const existing = groups.get(groupKey);
 
     if (existing) {
@@ -135,11 +117,6 @@ export function aggregateRequired(
         ? part.quantity
         : 0;
       existing.countInPending += 1;
-      existing.filesInvolved.add(part.fileName);
-      existing.lastUpdated = latestTimestamp(
-        existing.lastUpdated,
-        timestamp,
-      );
 
       if (!existing.partName && part.partName) {
         existing.partName = part.partName;
@@ -157,8 +134,6 @@ export function aggregateRequired(
       partNumber: part.partNumber,
       totalQuantity: Number.isFinite(part.quantity) ? part.quantity : 0,
       countInPending: 1,
-      filesInvolved: new Set([part.fileName]),
-      lastUpdated: timestamp,
     });
   }
 
@@ -168,7 +143,5 @@ export function aggregateRequired(
     partNumber: group.partNumber,
     totalQuantity: group.totalQuantity,
     countInPending: group.countInPending,
-    filesInvolved: Array.from(group.filesInvolved).sort(),
-    lastUpdated: group.lastUpdated,
   }));
 }

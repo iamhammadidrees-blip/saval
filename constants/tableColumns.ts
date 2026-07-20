@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
 import type { PendingPart, RequiredPart } from "@/lib/types";
+import { toShortDate } from "@/lib/utils";
 
 const EMPTY_CELL = "—";
 
@@ -28,22 +29,13 @@ function statusBadgeClass(color: string | undefined): string {
   }
 }
 
-function formatTimestamp(value: string | undefined): string {
-  if (!value) return EMPTY_CELL;
-
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return value;
-
-  return new Date(parsed).toLocaleString();
-}
-
 /** Column factory for the Pending Parts table. */
 export function createPendingColumns(): ColumnDef<PendingPart>[] {
   return [
     {
       accessorKey: "date",
       header: "Date",
-      cell: ({ row }) => displayText(row.original.date),
+      cell: ({ row }) => toShortDate(row.original.date) ?? EMPTY_CELL,
     },
     {
       accessorKey: "batch",
@@ -104,20 +96,6 @@ export function createRequiredColumns(): ColumnDef<RequiredPart>[] {
       accessorKey: "countInPending",
       header: "Count in Pending",
       cell: ({ row }) => row.original.countInPending.toLocaleString(),
-    },
-    {
-      id: "filesInvolved",
-      accessorFn: (row) => row.filesInvolved.join(", "),
-      header: "Files Involved",
-      cell: ({ row }) => {
-        const files = row.original.filesInvolved;
-        return files.length > 0 ? files.join(", ") : EMPTY_CELL;
-      },
-    },
-    {
-      accessorKey: "lastUpdated",
-      header: "Last Updated",
-      cell: ({ row }) => formatTimestamp(row.original.lastUpdated),
     },
   ];
 }
