@@ -55,14 +55,15 @@ export const STATUS_HEADER_HINTS = [
 ] as const;
 
 /**
- * File A normally has two status columns. Status 2 is authoritative.
- * If columns are date-labelled instead, the parser should use the right-most
- * status column as the latest value.
+ * File A normally has two status columns. Status 2 alone drives
+ * pending/resolved decisions — Status 1 and other status columns are ignored.
+ * Upload fails if Status 2 cannot be found (no rightmost fallback).
  */
 export const STATUS_COLUMN_RULE = {
   expectedCount: 2,
   preferredHeader: "status 2",
-  fallbackPosition: "rightmost",
+  requirePreferred: true,
+  preferredAliases: ["status 2", "status2", "status-2"] as const,
 } as const;
 
 /** Affected Qty is the only source used for Pending/Required quantities. */

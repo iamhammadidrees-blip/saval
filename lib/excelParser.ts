@@ -196,21 +196,28 @@ export function findHeaderRow(
     throw new Error("Could not find status columns.");
   }
 
-  const preferredStatusColumn = statusColumnIndexes.find(
-    (columnNumber) =>
-      normalizeHeader(statusHeaders.get(columnNumber)) ===
-      STATUS_COLUMN_RULE.preferredHeader,
+  const isStatus2Header = (header: string | undefined): boolean => {
+    const normalized = normalizeHeader(header).replace(/[-_]/g, " ");
+    return STATUS_COLUMN_RULE.preferredAliases.some(
+      (alias) =>
+        normalizeHeader(alias).replace(/[-_]/g, " ") === normalized,
+    );
+  };
+
+  const status2ColumnIndex = statusColumnIndexes.find((columnNumber) =>
+    isStatus2Header(statusHeaders.get(columnNumber)),
   );
-  const latestStatusColumnIndex =
-    preferredStatusColumn ??
-    statusColumnIndexes[statusColumnIndexes.length - 1];
+
+  if (status2ColumnIndex === undefined) {
+    throw new Error("Could not find Status 2 column.");
+  }
 
   return {
     headerRowNumber,
     columnMap,
     statusColumnIndexes,
     statusHeaders,
-    latestStatusColumnIndex,
+    latestStatusColumnIndex: status2ColumnIndex,
   };
 }
 
