@@ -1,9 +1,7 @@
 "use client";
 
-import { createElement } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge";
 import type { PendingPart, RequiredPart } from "@/lib/types";
 import { toShortDate } from "@/lib/utils";
 
@@ -14,24 +12,17 @@ function displayText(value: string | undefined): string {
   return trimmed || EMPTY_CELL;
 }
 
-function statusBadgeClass(color: string | undefined): string {
-  switch ((color ?? "").toLowerCase()) {
-    case "orange":
-      return "border-transparent bg-[#FFC000] text-black";
-    case "yellow":
-      return "border-transparent bg-[#FFFF00] text-black";
-    case "lightgreen":
-      return "border-transparent bg-[#A9D08E] text-black";
-    case "green":
-      return "border-transparent bg-[#92D050] text-black";
-    default:
-      return "border-border bg-muted text-muted-foreground";
-  }
-}
+const indexColumn = <T,>(): ColumnDef<T> => ({
+  id: "index",
+  header: "#",
+  enableSorting: false,
+  cell: ({ row }) => row.index + 1,
+});
 
 /** Column factory for the Pending Parts table. */
 export function createPendingColumns(): ColumnDef<PendingPart>[] {
   return [
+    indexColumn<PendingPart>(),
     {
       accessorKey: "date",
       header: "Date",
@@ -61,15 +52,7 @@ export function createPendingColumns(): ColumnDef<PendingPart>[] {
       id: "status",
       accessorFn: (row) => row.status,
       header: "Status",
-      cell: ({ row }) => {
-        const { status, color } = row.original;
-
-        return createElement(
-          Badge,
-          { className: statusBadgeClass(color) },
-          displayText(status),
-        );
-      },
+      cell: ({ row }) => displayText(row.original.status),
     },
   ];
 }
@@ -77,6 +60,13 @@ export function createPendingColumns(): ColumnDef<PendingPart>[] {
 /** Column factory for the Required Parts table. */
 export function createRequiredColumns(): ColumnDef<RequiredPart>[] {
   return [
+    indexColumn<RequiredPart>(),
+    {
+      id: "tag",
+      header: "Status",
+      enableSorting: false,
+      cell: () => "pending",
+    },
     {
       accessorKey: "partNumber",
       header: "Part No.",
