@@ -35,3 +35,17 @@ export function toShortDate(value: unknown): string | undefined {
 
   return raw;
 }
+
+/**
+ * Batch → model: keep first 3 letters, skip trailing digits.
+ * e.g. "ALW6001" → "ALW"
+ */
+export function extractModelFromBatch(
+  batch: string | undefined,
+): string | undefined {
+  const trimmed = batch?.trim() ?? "";
+  if (!trimmed) return undefined;
+
+  const match = trimmed.match(/^([A-Za-z]{3})/);
+  return match?.[1]?.toUpperCase();
+}

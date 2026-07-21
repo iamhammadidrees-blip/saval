@@ -22,6 +22,7 @@ const STATUS_FILL_ARGB: Record<string, string> = {
 };
 
 const FILE_B_HEADERS = [
+  "Model",
   "Part No.",
   "Part Name",
   "Total Qty",
@@ -72,6 +73,7 @@ async function buildRequiredPartsWorkbook(
 
   for (const part of parts) {
     worksheet.addRow([
+      part.model ?? "",
       part.partNumber ?? "",
       part.partName,
       part.totalQuantity,
@@ -80,6 +82,7 @@ async function buildRequiredPartsWorkbook(
   }
 
   worksheet.columns = [
+    { width: 10 },
     { width: 14 },
     { width: 32 },
     { width: 12 },

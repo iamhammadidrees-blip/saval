@@ -7,7 +7,7 @@ import {
 } from "@/constants/parserConfig";
 import type { RawParsedRow } from "@/lib/excelParser";
 import type { PendingPart, RequiredPart } from "@/lib/types";
-import { toShortDate } from "@/lib/utils";
+import { extractModelFromBatch, toShortDate } from "@/lib/utils";
 
 const PENDING_STATUS_COLORS = new Set([
   "orange",
@@ -91,8 +91,14 @@ interface RequiredAccumulator {
   id: string;
   partName: string;
   partNumber?: string;
+  models: Set<string>;
   totalQuantity: number;
   countInPending: number;
+}
+
+function formatModels(models: Set<string>): string | undefined {
+  if (models.size === 0) return undefined;
+  return Array.from(models).sort().join(", ");
 }
 
 /**
@@ -110,6 +116,7 @@ export function aggregateRequired(
 
     if (!groupKey) continue;
 
+    const model = extractModelFromBatch(part.batch);
     const existing = groups.get(groupKey);
 
     if (existing) {
@@ -124,14 +131,21 @@ export function aggregateRequired(
       if (!existing.partNumber && part.partNumber) {
         existing.partNumber = part.partNumber;
       }
+      if (model) {
+        existing.models.add(model);
+      }
 
       continue;
     }
+
+    const models = new Set<string>();
+    if (model) models.add(model);
 
     groups.set(groupKey, {
       id: groupKey,
       partName: part.partName,
       partNumber: part.partNumber,
+      models,
       totalQuantity: Number.isFinite(part.quantity) ? part.quantity : 0,
       countInPending: 1,
     });
@@ -141,6 +155,7 @@ export function aggregateRequired(
     id: group.id,
     partName: group.partName,
     partNumber: group.partNumber,
+    model: formatModels(group.models),
     totalQuantity: group.totalQuantity,
     countInPending: group.countInPending,
   }));

@@ -24,6 +24,8 @@ export interface RequiredPart {
   id: string;
   partName: string;
   partNumber?: string;
+  /** First 3 letters of batch (e.g. ALW6001 → ALW). */
+  model?: string;
   totalQuantity: number;
   countInPending: number;
 }

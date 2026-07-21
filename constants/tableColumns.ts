@@ -62,10 +62,9 @@ export function createRequiredColumns(): ColumnDef<RequiredPart>[] {
   return [
     indexColumn<RequiredPart>(),
     {
-      id: "tag",
-      header: "Status",
-      enableSorting: false,
-      cell: () => "pending",
+      accessorKey: "model",
+      header: "Model",
+      cell: ({ row }) => displayText(row.original.model),
     },
     {
       accessorKey: "partNumber",
