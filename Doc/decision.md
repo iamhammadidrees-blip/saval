@@ -91,3 +91,15 @@ No re-parse of Excel unless the user uploads again.
 -------------------------------------------
 Dropped → never in DB
 Bottom line: Status 2 fill color decides first; only pending rows are written to IndexedDB; Required is calculated from that stored pending list, not saved separately.
+
+----------------------------------------------------------
+4. Required aggregation (Part No + Model)
+
+Group key = normalize(partNumber || partName) + "|" + normalize(model)
+
+- model = extractModelFromBatch(batch) — first 3 letters of Batch (e.g. ALW6001 → ALW)
+- Empty / unparseable batch → model key "" (shared "no model" bucket for that part)
+- Same Part No + same model → one Required row; sum Affected Qty; countInPending++
+- Same Part No + different models → separate Required rows (each with own qty)
+- RequiredPart.model is a single model string (not a joined list)
+- Unique Parts summary card = distinct Part No (or Part Name fallback), NOT part+model rows

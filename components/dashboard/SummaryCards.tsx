@@ -9,24 +9,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { aggregateRequired } from "@/lib/dataProcessor";
+import { requiredPartKey } from "@/lib/dataProcessor";
 import { useAppStore } from "@/store/useAppStore";
 
 export function SummaryCards() {
   const pendingParts = useAppStore((state) => state.pendingParts);
   const files = useAppStore((state) => state.files);
 
-  const { totalPending, totalQuantity, uniqueParts } = useMemo(
-    () => ({
+  const { totalPending, totalQuantity, uniqueParts } = useMemo(() => {
+    const partKeys = new Set<string>();
+
+    for (const part of pendingParts) {
+      const key = requiredPartKey(part);
+      if (key) partKeys.add(key);
+    }
+
+    return {
       totalPending: pendingParts.length,
       totalQuantity: pendingParts.reduce(
         (sum, part) => sum + part.quantity,
         0,
       ),
-      uniqueParts: aggregateRequired(pendingParts).length,
-    }),
-    [pendingParts],
-  );
+      uniqueParts: partKeys.size,
+    };
+  }, [pendingParts]);
   const filesUploaded = files.length;
 
   const cards = [
@@ -43,7 +49,7 @@ export function SummaryCards() {
     {
       label: "Unique Parts",
       value: uniqueParts,
-      description: "Normalized required groups",
+      description: "Distinct part numbers",
     },
     {
       label: "Files Uploaded",

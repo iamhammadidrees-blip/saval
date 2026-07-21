@@ -91,19 +91,26 @@ interface RequiredAccumulator {
   id: string;
   partName: string;
   partNumber?: string;
-  models: Set<string>;
+  model?: string;
   totalQuantity: number;
   countInPending: number;
 }
 
-function formatModels(models: Set<string>): string | undefined {
-  if (models.size === 0) return undefined;
-  return Array.from(models).sort().join(", ");
+/**
+ * Part identity for Required grouping / Unique Parts card
+ * (Part No, else Part Name). Model is applied separately.
+ */
+export function requiredPartKey(part: PendingPart): string {
+  return normalizeText(part.partNumber) || normalizeText(part.partName);
 }
 
 /**
  * Computes the Required view from pending parts.
- * This result is derived data and is never written to IndexedDB.
+ * Group = Part No (or Name) + Model from batch.
+ * Same part + same model → one row (sum qty).
+ * Same part + different models → separate rows.
+ * Empty model → shared "" bucket for that part.
+ * Derived only — never written to IndexedDB.
  */
 export function aggregateRequired(
   parts: PendingPart[],
@@ -111,12 +118,12 @@ export function aggregateRequired(
   const groups = new Map<string, RequiredAccumulator>();
 
   for (const part of parts) {
-    const groupKey =
-      normalizeText(part.partNumber) || normalizeText(part.partName);
-
-    if (!groupKey) continue;
+    const partKey = requiredPartKey(part);
+    if (!partKey) continue;
 
     const model = extractModelFromBatch(part.batch);
+    const modelKey = normalizeText(model);
+    const groupKey = `${partKey}|${modelKey}`;
     const existing = groups.get(groupKey);
 
     if (existing) {
@@ -131,21 +138,15 @@ export function aggregateRequired(
       if (!existing.partNumber && part.partNumber) {
         existing.partNumber = part.partNumber;
       }
-      if (model) {
-        existing.models.add(model);
-      }
 
       continue;
     }
-
-    const models = new Set<string>();
-    if (model) models.add(model);
 
     groups.set(groupKey, {
       id: groupKey,
       partName: part.partName,
       partNumber: part.partNumber,
-      models,
+      model,
       totalQuantity: Number.isFinite(part.quantity) ? part.quantity : 0,
       countInPending: 1,
     });
@@ -155,7 +156,7 @@ export function aggregateRequired(
     id: group.id,
     partName: group.partName,
     partNumber: group.partNumber,
-    model: formatModels(group.models),
+    model: group.model,
     totalQuantity: group.totalQuantity,
     countInPending: group.countInPending,
   }));
