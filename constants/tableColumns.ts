@@ -88,3 +88,25 @@ export function createRequiredColumns(): ColumnDef<RequiredPart>[] {
     },
   ];
 }
+
+/** Column factory for the Models tab (filtered Required rows). */
+export function createModelColumns(): ColumnDef<RequiredPart>[] {
+  return [
+    indexColumn<RequiredPart>(),
+    {
+      accessorKey: "model",
+      header: "Model",
+      cell: ({ row }) => displayText(row.original.model),
+    },
+    {
+      accessorKey: "partNumber",
+      header: "Part No.",
+      cell: ({ row }) => displayText(row.original.partNumber),
+    },
+    {
+      accessorKey: "totalQuantity",
+      header: "Qty",
+      cell: ({ row }) => row.original.totalQuantity.toLocaleString(),
+    },
+  ];
+}
