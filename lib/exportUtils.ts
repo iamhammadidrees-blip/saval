@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 
+import { requiredModelLabel } from "@/lib/dataProcessor";
 import type { PendingPart, RequiredPart } from "@/lib/types";
 import { toShortDate } from "@/lib/utils";
 
@@ -30,6 +31,10 @@ const FILE_B_HEADERS = [
 ] as const;
 
 const FILE_B_SHEET_NAME = "Required Parts";
+
+const MODEL_PARTS_HEADERS = ["Model", "Part No.", "Qty"] as const;
+const MODEL_PARTS_SHEET_NAME = "Model Parts";
+
 const HEADER_FILL_ARGB = "FFD9E1F2";
 
 function assertBrowser(): void {
@@ -50,6 +55,16 @@ export function getRequiredPartsFileBFileName(
 export function getPendingPartsFileName(date: Date = new Date()): string {
   const isoDate = date.toISOString().slice(0, 10);
   return `Pending_Parts_${isoDate}.xlsx`;
+}
+
+/** Suggested download name: `Required_Parts_ALW_YYYY-MM-DD.xlsx` */
+export function getModelPartsFileName(
+  model: string,
+  date: Date = new Date(),
+): string {
+  const safeModel = requiredModelLabel(model).replace(/[^\w-]+/g, "_");
+  const isoDate = date.toISOString().slice(0, 10);
+  return `Required_Parts_${safeModel}_${isoDate}.xlsx`;
 }
 
 function triggerDownload(blob: Blob, fileName: string): void {
@@ -88,6 +103,30 @@ async function buildRequiredPartsWorkbook(
     { width: 12 },
     { width: 18 },
   ];
+
+  return workbook;
+}
+
+async function buildModelPartsWorkbook(
+  parts: RequiredPart[],
+  model: string,
+): Promise<ExcelJS.Workbook> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(MODEL_PARTS_SHEET_NAME);
+  const modelLabel = requiredModelLabel(model);
+
+  worksheet.addRow([...MODEL_PARTS_HEADERS]);
+  styleHeaderRow(worksheet);
+
+  for (const part of parts) {
+    worksheet.addRow([
+      requiredModelLabel(part.model) || modelLabel,
+      part.partNumber ?? "",
+      part.totalQuantity,
+    ]);
+  }
+
+  worksheet.columns = [{ width: 10 }, { width: 14 }, { width: 12 }];
 
   return workbook;
 }
@@ -162,6 +201,27 @@ export async function downloadRequiredPartsFileB(
   });
 
   triggerDownload(blob, getRequiredPartsFileBFileName());
+}
+
+/**
+ * Exports one model's required list (Model, Part No., Qty) and downloads it.
+ * No-op when parts is empty.
+ */
+export async function downloadModelParts(
+  parts: RequiredPart[],
+  model: string,
+): Promise<void> {
+  if (parts.length === 0) return;
+
+  assertBrowser();
+
+  const workbook = await buildModelPartsWorkbook(parts, model);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  triggerDownload(blob, getModelPartsFileName(model));
 }
 
 /**
