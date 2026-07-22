@@ -39,23 +39,33 @@ export const HEADER_MARKERS = [
   "part name",
 ] as const;
 
+/**
+ * Headers that identify a status column (normalized).
+ * Includes Status-1 / Status-2 / Status-3 style names.
+ */
 export const STATUS_HEADER_HINTS = [
   "status",
   "status as of",
   "status 1",
   "status 2",
+  "status 3",
+  "status-1",
+  "status-2",
+  "status-3",
+  "status1",
+  "status2",
+  "status3",
 ] as const;
 
 /**
- * File A normally has two status columns. Status 2 alone drives
- * pending/resolved decisions — Status 1 and other status columns are ignored.
- * Upload fails if Status 2 cannot be found (no rightmost fallback).
+ * Decision column = the 2nd status column left-to-right (1-based position 2).
+ * Names may be Status / Status-1 / Status-2 / Status-3 / dates — position wins.
+ * Upload fails if fewer than 2 real status columns are found.
  */
 export const STATUS_COLUMN_RULE = {
   expectedCount: 2,
-  preferredHeader: "status 2",
-  requirePreferred: true,
-  preferredAliases: ["status 2", "status2", "status-2"] as const,
+  /** 0-based index into sorted statusColumnIndexes */
+  decisionColumnIndex: 1,
 } as const;
 
 /** Affected Qty is the only source used for Pending/Required quantities. */

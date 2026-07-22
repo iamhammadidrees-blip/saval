@@ -109,9 +109,17 @@ function isHeaderRow(worksheet: Worksheet, rowNumber: number): boolean {
 }
 
 function hasStatusHint(text: string): boolean {
-  const normalized = normalizeHeader(text);
+  const normalized = normalizeHeader(text).replace(/[-_]/g, " ");
+  // Exact / numbered status headers (Status, Status 1, Status-2, Status3, …)
+  if (/^status(?:\s*\d+)?$/.test(normalized)) return true;
   return STATUS_HEADER_HINTS.some(
-    (hint) => normalized === hint || normalized.includes(hint),
+    (hint) => {
+      const normalizedHint = normalizeHeader(hint).replace(/[-_]/g, " ");
+      return (
+        normalized === normalizedHint ||
+        normalized.includes(normalizedHint)
+      );
+    },
   );
 }
 
@@ -177,10 +185,12 @@ export function findHeaderRow(
       return;
     }
 
+    // Require status-like / dated header text. Do NOT treat Remarks (etc.)
+    // as status just because they sit under a "Status as of" group row.
     const isStatusColumn =
       hasStatusHint(header) ||
-      isDatedStatusHeader(cell) ||
-      hasStatusGroupAbove(worksheet, headerRowNumber, columnNumber);
+      (isDatedStatusHeader(cell) &&
+        hasStatusGroupAbove(worksheet, headerRowNumber, columnNumber));
 
     if (isStatusColumn) {
       statusColumnIndexes.push(columnNumber);
@@ -190,32 +200,21 @@ export function findHeaderRow(
 
   statusColumnIndexes.sort((left, right) => left - right);
 
-  if (statusColumnIndexes.length === 0) {
-    throw new Error("Could not find status columns.");
-  }
-
-  const isStatus2Header = (header: string | undefined): boolean => {
-    const normalized = normalizeHeader(header).replace(/[-_]/g, " ");
-    return STATUS_COLUMN_RULE.preferredAliases.some(
-      (alias) =>
-        normalizeHeader(alias).replace(/[-_]/g, " ") === normalized,
+  if (statusColumnIndexes.length < STATUS_COLUMN_RULE.expectedCount) {
+    throw new Error(
+      `Could not find ${STATUS_COLUMN_RULE.expectedCount} status columns (found ${statusColumnIndexes.length}).`,
     );
-  };
-
-  const status2ColumnIndex = statusColumnIndexes.find((columnNumber) =>
-    isStatus2Header(statusHeaders.get(columnNumber)),
-  );
-
-  if (status2ColumnIndex === undefined) {
-    throw new Error("Could not find Status 2 column.");
   }
+
+  const decisionColumnIndex =
+    statusColumnIndexes[STATUS_COLUMN_RULE.decisionColumnIndex];
 
   return {
     headerRowNumber,
     columnMap,
     statusColumnIndexes,
     statusHeaders,
-    latestStatusColumnIndex: status2ColumnIndex,
+    latestStatusColumnIndex: decisionColumnIndex,
   };
 }
 
