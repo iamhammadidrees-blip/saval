@@ -161,3 +161,32 @@ export function aggregateRequired(
     countInPending: group.countInPending,
   }));
 }
+
+/** Label used when a Required row has no model (also used in filenames). */
+export const UNKNOWN_MODEL = "UNKNOWN";
+
+export function requiredModelLabel(model: string | undefined): string {
+  const trimmed = model?.trim() ?? "";
+  return trimmed || UNKNOWN_MODEL;
+}
+
+/** Unique models from Required parts, sorted A–Z. Missing model → UNKNOWN. */
+export function listRequiredModels(parts: RequiredPart[]): string[] {
+  const models = new Set<string>();
+
+  for (const part of parts) {
+    models.add(requiredModelLabel(part.model));
+  }
+
+  return Array.from(models).sort((left, right) => left.localeCompare(right));
+}
+
+/** Rows belonging to one model (missing model matches UNKNOWN). */
+export function filterRequiredByModel(
+  parts: RequiredPart[],
+  model: string,
+): RequiredPart[] {
+  return parts.filter(
+    (part) => requiredModelLabel(part.model) === model,
+  );
+}
