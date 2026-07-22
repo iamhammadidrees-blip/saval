@@ -68,6 +68,15 @@ export function DataTable<TData>({
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const query = String(filterValue ?? "").trim().toLowerCase();
+      if (!query) return true;
+
+      const partNumber = String(
+        (row.original as { partNumber?: string }).partNumber ?? "",
+      ).toLowerCase();
+      return partNumber.includes(query);
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

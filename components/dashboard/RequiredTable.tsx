@@ -15,7 +15,7 @@ export function RequiredTable() {
       columns={columns}
       data={requiredParts}
       emptyMessage="No required parts yet"
-      searchPlaceholder="Search required parts…"
+      searchPlaceholder="Search by Part No.…"
     />
   );
 }

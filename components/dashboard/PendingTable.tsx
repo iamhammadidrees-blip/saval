@@ -15,7 +15,7 @@ export function PendingTable() {
       columns={columns}
       data={pendingParts}
       emptyMessage="Upload File A to see pending parts"
-      searchPlaceholder="Search pending parts…"
+      searchPlaceholder="Search by Part No.…"
     />
   );
 }
