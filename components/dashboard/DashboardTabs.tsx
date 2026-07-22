@@ -1,5 +1,6 @@
 "use client";
 
+import { ModelsView } from "@/components/dashboard/ModelsView";
 import { PendingTable } from "@/components/dashboard/PendingTable";
 import { RequiredTable } from "@/components/dashboard/RequiredTable";
 import { UploadedFilesList } from "@/components/upload/UploadedFilesList";
@@ -15,6 +16,9 @@ export function DashboardTabs() {
         <TabsTrigger value="required" className="px-4">
           Required
         </TabsTrigger>
+        <TabsTrigger value="models" className="px-4">
+          Models
+        </TabsTrigger>
         <TabsTrigger value="files" className="px-4">
           Files Uploaded
         </TabsTrigger>
@@ -24,6 +28,9 @@ export function DashboardTabs() {
       </TabsContent>
       <TabsContent value="required">
         <RequiredTable />
+      </TabsContent>
+      <TabsContent value="models">
+        <ModelsView />
       </TabsContent>
       <TabsContent value="files">
         <UploadedFilesList />
