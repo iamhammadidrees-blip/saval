@@ -6,7 +6,7 @@ import {
   type StatusKeyword,
 } from "@/constants/parserConfig";
 import type { RawParsedRow } from "@/lib/excelParser";
-import type { PendingPart, RequiredPart } from "@/lib/types";
+import type { PendingPart, RequiredPart, UniquePart } from "@/lib/types";
 import { extractModelFromBatch, toShortDate } from "@/lib/utils";
 
 const PENDING_STATUS_COLORS = new Set([
@@ -159,6 +159,52 @@ export function aggregateRequired(
     model: group.model,
     totalQuantity: group.totalQuantity,
     countInPending: group.countInPending,
+  }));
+}
+
+interface UniqueAccumulator {
+  id: string;
+  partNumber: string;
+  partName: string;
+  totalQuantity: number;
+}
+
+/**
+ * Unique Parts view — group by Part No. only.
+ * Same part number → one row (sum qty), ignoring batch, name, and status.
+ * Rows without a part number are skipped. Derived only — never written to IndexedDB.
+ */
+export function aggregateUniqueParts(parts: PendingPart[]): UniquePart[] {
+  const groups = new Map<string, UniqueAccumulator>();
+
+  for (const part of parts) {
+    const partNumberKey = normalizeText(part.partNumber);
+    if (!partNumberKey) continue;
+
+    const existing = groups.get(partNumberKey);
+    const qty = Number.isFinite(part.quantity) ? part.quantity : 0;
+
+    if (existing) {
+      existing.totalQuantity += qty;
+      if (!existing.partName && part.partName) {
+        existing.partName = part.partName;
+      }
+      continue;
+    }
+
+    groups.set(partNumberKey, {
+      id: partNumberKey,
+      partNumber: part.partNumber!.trim(),
+      partName: part.partName,
+      totalQuantity: qty,
+    });
+  }
+
+  return Array.from(groups.values(), (group) => ({
+    id: group.id,
+    partNumber: group.partNumber,
+    partName: group.partName,
+    totalQuantity: group.totalQuantity,
   }));
 }
 
