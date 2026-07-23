@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { PendingPart, RequiredPart } from "@/lib/types";
+import type { PendingPart, RequiredPart, UniquePart } from "@/lib/types";
 import { toShortDate } from "@/lib/utils";
 
 const EMPTY_CELL = "—";
@@ -98,6 +98,28 @@ export function createModelColumns(): ColumnDef<RequiredPart>[] {
       header: "Model",
       cell: ({ row }) => displayText(row.original.model),
     },
+    {
+      accessorKey: "partNumber",
+      header: "Part No.",
+      cell: ({ row }) => displayText(row.original.partNumber),
+    },
+    {
+      accessorKey: "partName",
+      header: "Part Name",
+      cell: ({ row }) => displayText(row.original.partName),
+    },
+    {
+      accessorKey: "totalQuantity",
+      header: "Qty",
+      cell: ({ row }) => row.original.totalQuantity.toLocaleString(),
+    },
+  ];
+}
+
+/** Column factory for the Unique Parts dialog (Part No. aggregation). */
+export function createUniquePartColumns(): ColumnDef<UniquePart>[] {
+  return [
+    indexColumn<UniquePart>(),
     {
       accessorKey: "partNumber",
       header: "Part No.",
