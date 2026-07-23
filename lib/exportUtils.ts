@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 
 import { requiredModelLabel } from "@/lib/dataProcessor";
-import type { PendingPart, RequiredPart } from "@/lib/types";
+import type { PendingPart, RequiredPart, UniquePart } from "@/lib/types";
 import { toShortDate } from "@/lib/utils";
 
 const PENDING_HEADERS = [
@@ -35,6 +35,9 @@ const FILE_B_SHEET_NAME = "Required Parts";
 const MODEL_PARTS_HEADERS = ["Model", "Part No.", "Part Name", "Qty"] as const;
 const MODEL_PARTS_SHEET_NAME = "Model Parts";
 
+const UNIQUE_PARTS_HEADERS = ["Part No.", "Part Name", "Qty"] as const;
+const UNIQUE_PARTS_SHEET_NAME = "Unique Parts";
+
 const HEADER_FILL_ARGB = "FFD9E1F2";
 
 function assertBrowser(): void {
@@ -65,6 +68,12 @@ export function getModelPartsFileName(
   const safeModel = requiredModelLabel(model).replace(/[^\w-]+/g, "_");
   const isoDate = date.toISOString().slice(0, 10);
   return `Required_Parts_${safeModel}_${isoDate}.xlsx`;
+}
+
+/** Suggested download name: `Unique_Parts_YYYY-MM-DD.xlsx` */
+export function getUniquePartsFileName(date: Date = new Date()): string {
+  const isoDate = date.toISOString().slice(0, 10);
+  return `Unique_Parts_${isoDate}.xlsx`;
 }
 
 function triggerDownload(blob: Blob, fileName: string): void {
@@ -133,6 +142,28 @@ async function buildModelPartsWorkbook(
     { width: 32 },
     { width: 12 },
   ];
+
+  return workbook;
+}
+
+async function buildUniquePartsWorkbook(
+  parts: UniquePart[],
+): Promise<ExcelJS.Workbook> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(UNIQUE_PARTS_SHEET_NAME);
+
+  worksheet.addRow([...UNIQUE_PARTS_HEADERS]);
+  styleHeaderRow(worksheet);
+
+  for (const part of parts) {
+    worksheet.addRow([
+      part.partNumber,
+      part.partName,
+      part.totalQuantity,
+    ]);
+  }
+
+  worksheet.columns = [{ width: 14 }, { width: 32 }, { width: 12 }];
 
   return workbook;
 }
@@ -228,6 +259,24 @@ export async function downloadModelParts(
   });
 
   triggerDownload(blob, getModelPartsFileName(model));
+}
+
+/**
+ * Exports unique parts (Part No. only aggregation) and downloads Excel.
+ * No-op when parts is empty.
+ */
+export async function downloadUniqueParts(parts: UniquePart[]): Promise<void> {
+  if (parts.length === 0) return;
+
+  assertBrowser();
+
+  const workbook = await buildUniquePartsWorkbook(parts);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  triggerDownload(blob, getUniquePartsFileName());
 }
 
 /**

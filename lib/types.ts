@@ -30,6 +30,14 @@ export interface RequiredPart {
   countInPending: number;
 }
 
+/** Computed only — grouped by Part No. across all batches/models. */
+export interface UniquePart {
+  id: string;
+  partNumber: string;
+  partName: string;
+  totalQuantity: number;
+}
+
 export interface BackupSnapshot {
   version: 1;
   exportedAt: string;
