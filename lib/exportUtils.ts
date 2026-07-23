@@ -32,7 +32,7 @@ const FILE_B_HEADERS = [
 
 const FILE_B_SHEET_NAME = "Required Parts";
 
-const MODEL_PARTS_HEADERS = ["Model", "Part No.", "Qty"] as const;
+const MODEL_PARTS_HEADERS = ["Model", "Part No.", "Part Name", "Qty"] as const;
 const MODEL_PARTS_SHEET_NAME = "Model Parts";
 
 const HEADER_FILL_ARGB = "FFD9E1F2";
@@ -122,11 +122,17 @@ async function buildModelPartsWorkbook(
     worksheet.addRow([
       requiredModelLabel(part.model) || modelLabel,
       part.partNumber ?? "",
+      part.partName,
       part.totalQuantity,
     ]);
   }
 
-  worksheet.columns = [{ width: 10 }, { width: 14 }, { width: 12 }];
+  worksheet.columns = [
+    { width: 10 },
+    { width: 14 },
+    { width: 32 },
+    { width: 12 },
+  ];
 
   return workbook;
 }

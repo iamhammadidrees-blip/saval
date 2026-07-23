@@ -104,6 +104,11 @@ export function createModelColumns(): ColumnDef<RequiredPart>[] {
       cell: ({ row }) => displayText(row.original.partNumber),
     },
     {
+      accessorKey: "partName",
+      header: "Part Name",
+      cell: ({ row }) => displayText(row.original.partName),
+    },
+    {
       accessorKey: "totalQuantity",
       header: "Qty",
       cell: ({ row }) => row.original.totalQuantity.toLocaleString(),
