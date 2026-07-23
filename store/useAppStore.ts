@@ -11,6 +11,7 @@ import {
   putPendingParts,
 } from "@/lib/indexedDB";
 import type { PendingPart, UploadedFile } from "@/lib/types";
+import { toShortDate } from "@/lib/utils";
 
 interface AppState {
   files: UploadedFile[];
@@ -51,7 +52,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
       set({
         files,
-        pendingParts,
+        pendingParts: pendingParts.map((part) => ({
+          ...part,
+          date: toShortDate(part.date),
+        })),
         isLoading: false,
         isHydrated: true,
       });

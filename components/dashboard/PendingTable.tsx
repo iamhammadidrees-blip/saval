@@ -1,15 +1,21 @@
 "use client";
 
-import { PackageSearch } from "lucide-react";
+import { useMemo } from "react";
+
+import { DataTable } from "@/components/common/DataTable";
+import { createPendingColumns } from "@/constants/tableColumns";
+import { useAppStore } from "@/store/useAppStore";
 
 export function PendingTable() {
+  const pendingParts = useAppStore((state) => state.pendingParts);
+  const columns = useMemo(() => createPendingColumns(), []);
+
   return (
-    <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-8 text-center">
-      <PackageSearch className="size-8 text-muted-foreground" />
-      <p className="text-sm font-medium">No pending parts yet</p>
-      <p className="text-sm text-muted-foreground">
-        Upload File A to see pending parts
-      </p>
-    </div>
+    <DataTable
+      columns={columns}
+      data={pendingParts}
+      emptyMessage="Upload File A to see pending parts"
+      searchPlaceholder="Search by Part No.…"
+    />
   );
 }

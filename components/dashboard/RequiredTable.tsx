@@ -1,15 +1,21 @@
 "use client";
 
-import { ClipboardList } from "lucide-react";
+import { useMemo } from "react";
+
+import { DataTable } from "@/components/common/DataTable";
+import { createRequiredColumns } from "@/constants/tableColumns";
+import { usePendingData } from "@/hooks/usePendingData";
 
 export function RequiredTable() {
+  const { requiredParts } = usePendingData();
+  const columns = useMemo(() => createRequiredColumns(), []);
+
   return (
-    <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-8 text-center">
-      <ClipboardList className="size-8 text-muted-foreground" />
-      <p className="text-sm font-medium">No required parts yet</p>
-      <p className="text-sm text-muted-foreground">
-        Upload File A to see pending parts
-      </p>
-    </div>
+    <DataTable
+      columns={columns}
+      data={requiredParts}
+      emptyMessage="No required parts yet"
+      searchPlaceholder="Search by Part No.…"
+    />
   );
 }

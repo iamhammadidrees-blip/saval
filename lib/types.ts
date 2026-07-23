@@ -16,10 +16,6 @@ export interface PendingPart {
   status: string;
   /** e.g. "orange" | "yellow" | "lightgreen" | ... */
   color?: string;
-  /** Header text of the latest status column */
-  statusDate?: string;
-  remarks?: string;
-  handlingMethod?: string;
   processedAt: string;
 }
 
@@ -28,10 +24,18 @@ export interface RequiredPart {
   id: string;
   partName: string;
   partNumber?: string;
+  /** First 3 letters of batch (e.g. ALW6001 → ALW). */
+  model?: string;
   totalQuantity: number;
   countInPending: number;
-  filesInvolved: string[];
-  lastUpdated: string;
+}
+
+/** Computed only — grouped by Part No. across all batches/models. */
+export interface UniquePart {
+  id: string;
+  partNumber: string;
+  partName: string;
+  totalQuantity: number;
 }
 
 export interface BackupSnapshot {
