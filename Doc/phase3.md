@@ -18,7 +18,7 @@ Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 
 ### Core intelligence (Phase 2) — done
 
-- ExcelJS File A parse (header detection, Status 2 / right-most status, color + keyword pending filter)
+- ExcelJS File A parse (header detection, **2nd status column** left-to-right, color + keyword pending filter — see `Doc/decision.md`)
 - Smart replace-by-fileName → IndexedDB + store
 - Pending table + Required table (TanStack) + File B / Pending Excel export
 - Upload toasts + parsing loading state on dropzone
@@ -208,7 +208,7 @@ Replace / extend the default README (and optionally add `Doc/USER_GUIDE.md`):
 
 1. What the app does (Pending vs Required vs Models)
 2. Upload File A (multi-file, same name = replace)
-3. How pending is decided (Status 2 color/keywords — pointer to `Doc/decision.md`)
+3. How pending is decided (**2nd status column** color/keywords — pointer to `Doc/decision.md`)
 4. Model = first 3 letters of Batch
 5. Download File B / Pending / per-model export
 6. Files Uploaded → delete one file

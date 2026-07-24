@@ -23,7 +23,7 @@ Columns: Sr. No., Date, Batch, Claim Ref No., Part No., Part Name, Per Unit Qty,
 
 
 
-Status columns are dynamic: there can be N dated status columns; the right-most one is the latest status and is the one that decides pending.
+Status columns are dynamic (Status / Status-1 / Status-2 / Status-3 / dated headers, etc.). FINAL (as coded): the **2nd status column left-to-right** decides pending — not Status-2-by-name and not right-most. Requires ≥2 real status columns.
 
 
 
@@ -35,7 +35,7 @@ Confirmed parsing rules:
 
 
 
-Pending rule: a row is pending when its LATEST status is orange / unresolved — statuses like "Under Observation", "Need to Order", "Need to Order Sub-Assy Part" (orange fill). Green statuses ("Issued from Inventory", PK-xxxx claim references) mean resolved and are excluded. Detection uses fill color first, keyword list as fallback (both configurable in constants/parserConfig.ts).
+Pending rule: a row is pending when the **2nd status column** fill is orange/yellow/light-green (or keyword fallback) — e.g. "Under Observation", "Need to Order". Green (#92D050) or PK-xxxx / "Issued from Inventory" mean resolved and are excluded. Detection uses fill color first, keyword list as fallback (both in constants/parserConfig.ts). See Doc/decision.md.
 
 
 
@@ -43,7 +43,7 @@ Quantity: aggregate Affected Qty for Required Parts / File B.
 
 
 
-Field mapping: partNumber = Part No., partName = Part Name, batch = Batch, date = Date, quantity = Affected Qty, status = latest status text, color = latest status cell fill. Remarks and Handling Method are also captured for display.
+Field mapping: partNumber = Part No., partName = Part Name, batch = Batch, date = Date, quantity = Affected Qty, status = 2nd status column text, color = 2nd status column cell fill.
 
 Key stack corrections (expert notes)
 
@@ -81,7 +81,7 @@ RequiredPart[] is never stored — computed via a memoized selector grouping by 
 
 
 
-Data models per PLAN 3.1 (UploadedFile, PendingPart, RequiredPart) in lib/types.ts, with PendingPart extended for the confirmed File A columns: remarks, handlingMethod, and statusDate (the date of the latest status column).
+Data models in `lib/types.ts` (FINAL as coded): `UploadedFile`, `PendingPart` (includes `status` + `color` from the **2nd status column**), `RequiredPart` (includes `model`), `UniquePart`, `BackupSnapshot`. See `Doc/decision.md`.
 
 Folder structure
 
@@ -217,11 +217,8 @@ interface PendingPart {
   batch?: string;
   date?: string;
   quantity: number;
-  status: string;
-  color?: string;           // "orange" | "yellow" | "lightgreen" | ...
-  statusDate?: string;      // header text of latest status column
-  remarks?: string;
-  handlingMethod?: string;
+  status: string;           // text from 2nd status column
+  color?: string;           // "orange" | "yellow" | "lightgreen" | "green" | "none"
   processedAt: string;
 }
 
@@ -229,10 +226,9 @@ interface RequiredPart {
   id: string;
   partName: string;
   partNumber?: string;
+  model?: string;           // extractModelFromBatch(batch)
   totalQuantity: number;
   countInPending: number;
-  filesInvolved: string[];
-  lastUpdated: string;
 }
 
 interface BackupSnapshot {
@@ -422,7 +418,7 @@ ________________________________________________________________________________
 Phase 2 — Core intelligence
 
 
-lib/excelParser.ts: ExcelJS workbook read from ArrayBuffer; skip title row and locate the header row (row containing "Part No."/"Part Name"); alias mapping for columns; detect all dated status columns and pick the right-most as latest; cell fill (ARGB) to color-name mapping; pending = orange fill or keyword fallback ("Under Observation", "Need to Order", ...). Calibrate against the real sample File A once dropped in the workspace.
+lib/excelParser.ts: ExcelJS workbook read from ArrayBuffer; skip title row and locate the header row (row containing "Part No."/"Part Name"); alias mapping for columns; detect status columns (Status / Status-N / dated under Status group — not Remarks); pick the **2nd left-to-right** as the decision column (`STATUS_COLUMN_RULE.decisionColumnIndex = 1`); cell fill (ARGB) to color-name mapping; pending = pending colors or keyword fallback. See Doc/decision.md.
 
 
 

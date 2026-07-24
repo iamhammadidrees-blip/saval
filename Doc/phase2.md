@@ -10,7 +10,7 @@
 
 Turn the Phase 1 shell into a working product core:
 
-1. Parse File A Excel (color-aware, latest status column)
+1. Parse File A Excel (color-aware, **2nd status column** left-to-right)
 2. Filter pending rows only
 3. Smart replace when same filename is re-uploaded
 4. Aggregate Required Parts on-the-fly
@@ -25,7 +25,7 @@ Turn the Phase 1 shell into a working product core:
 
 ```
 FileDropzone
-  → excelParser (ExcelJS: headers, latest status, color/keyword)
+  → excelParser (ExcelJS: headers, 2nd status column, color/keyword)
   → dataProcessor (filter pending + map to PendingPart[])
   → upsertFile (deleteByFileName if exists → put new parts + file meta)
   → IndexedDB + Zustand
@@ -46,9 +46,10 @@ Define:
 |---|---|
 | `HEADER_ALIASES` | Map flexible header text → field keys (`partNumber`, `partName`, `batch`, `date`, `quantity`, `remarks`, `handlingMethod`) |
 | `HEADER_MARKERS` | Strings that identify the real header row (e.g. `"Part No."`, `"Part Name"`) |
-| `STATUS_HEADER_HINTS` | Detect status columns (dated headers under "Status as of", or headers containing "Status") |
-| `PENDING_COLORS` | Hex/ARGB fills that mean pending (orange family) |
-| `RESOLVED_COLORS` | Hex/ARGB fills that mean resolved (green family) |
+| `STATUS_HEADER_HINTS` | Detect status columns (`Status`, `Status-1`/`2`/`3`, dated under Status group — not Remarks) |
+| `STATUS_COLUMN_RULE` | FINAL: `expectedCount: 2`, `decisionColumnIndex: 1` → **always 2nd status column** (not by name, not right-most) |
+| `PENDING_COLORS` | Exact ARGB fills that mean pending (orange / yellow / light green) |
+| `RESOLVED_COLORS` | Exact ARGB fill that means resolved (green `#92D050`) |
 | `PENDING_KEYWORDS` | Fallback if color missing: `"under observation"`, `"need to order"`, `"need to order sub-assy part"` |
 | `RESOLVED_KEYWORDS` | Fallback: `"issued from inventory"`, `/^pk[- ]?\d+/i` |
 | `QUANTITY_FIELD` | Always `Affected Qty` (alias list) |
@@ -81,8 +82,9 @@ parseFileA(buffer: ArrayBuffer, fileName: string): Promise<ParseResult>
 1. Scan first ~30 rows
 2. Pick first row that contains enough `HEADER_MARKERS` (both Part No. and Part Name preferred)
 3. Build `colIndex → fieldKey` map from aliases
-4. Collect **all status column indexes** (dated status headers); remember order left → right
-5. **Latest status column** = right-most status column
+4. Collect **all real status column indexes** (Status / Status-N / dated under Status group; **not** Remarks); sort left → right
+5. **Decision column (FINAL)** = **2nd** status column (`STATUS_COLUMN_RULE.decisionColumnIndex = 1`) — not Status-2-by-name, not right-most
+6. Fail if fewer than 2 status columns: `"Could not find 2 status columns…"`
 
 If header not found → throw clear error: `"Could not find header row (Part No. / Part Name)"`.
 
@@ -91,8 +93,8 @@ If header not found → throw clear error: `"Could not find header row (Part No.
 For each row after header:
 
 1. Skip fully empty rows
-2. Read mapped fields: partNumber, partName, batch, date, quantity (Affected Qty), remarks, handlingMethod
-3. Read latest status cell: **text** + **fill color** (ARGB from `cell.fill`)
+2. Read mapped fields: partNumber, partName, batch, date, quantity (Affected Qty)
+3. Read **2nd status column** cell: **text** + **fill color** (ARGB from `cell.fill`)
 4. Skip rows with no partName and no partNumber
 
 Return intermediate type (not yet filtered):
@@ -105,10 +107,7 @@ interface RawParsedRow {
   date?: string;
   quantity: number;
   status: string;
-  color?: string;       // "orange" | "green" | "yellow" | "none"
-  statusDate?: string;  // header label of latest status col
-  remarks?: string;
-  handlingMethod?: string;
+  color?: string;       // "orange" | "yellow" | "lightgreen" | "green" | "none"
 }
 ```
 
@@ -121,7 +120,7 @@ interface ParseResult {
 }
 ```
 
-**Done when:** unit-testable parse of a sample File A yields correct columns + latest status text/color for a few known rows (calibrate against real `.xlsx` when available).
+**Done when:** unit-testable parse of a sample File A yields correct columns + **2nd status** text/color for a few known rows (calibrate against real `.xlsx` when available). See `Doc/decision.md`.
 
 ---
 
@@ -136,7 +135,7 @@ aggregateRequired(parts: PendingPart[]): RequiredPart[]
 
 ### Pending decision (confirmed)
 
-1. **Color first:** if latest status fill is orange-like → pending; green-like → not pending
+1. **Color first:** if **2nd status column** fill is orange/yellow/light-green → pending; green → not pending
 2. **Keyword fallback** if color is missing/none:
    - pending keywords → pending
    - resolved keywords / PK-ref pattern → not pending
@@ -148,21 +147,21 @@ aggregateRequired(parts: PendingPart[]): RequiredPart[]
 - `fileName` = source file name
 - `quantity` = numeric Affected Qty (default 0 if invalid)
 - `processedAt` = ISO now
-- keep status, color, statusDate, remarks, handlingMethod
+- keep `status`, `color` from the **2nd status column** (plus date, batch, part fields)
 
-### Aggregate Required Parts
+### Aggregate Required Parts (FINAL as coded)
 
-Group key: `normalize(partNumber) || normalize(partName)`
+Group key: `normalize(partNumber || partName) + "|" + normalize(model)`  
+where `model = extractModelFromBatch(batch)`.
 
 For each group:
 
 - `totalQuantity` = sum of quantities
 - `countInPending` = number of rows
-- `filesInvolved` = unique fileNames
-- `lastUpdated` = max(processedAt) or max(date)
-- `id` = stable hash of group key (or nanoid once per compute — prefer stable key string)
+- `model` = single model string (empty batch → shared `""` bucket; UI/export may label `UNKNOWN`)
+- `id` = stable `partKey|modelKey`
 
-**RequiredPart is never written to IndexedDB** — compute in store selector / hook whenever `pendingParts` changes.
+**RequiredPart is never written to IndexedDB** — compute in store selector / hook whenever `pendingParts` changes. See `Doc/decision.md`.
 
 **Done when:** given a fixed array of RawParsedRow, filter + aggregate match expected counts from sample screenshot logic.
 

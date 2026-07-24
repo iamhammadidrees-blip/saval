@@ -6,7 +6,7 @@ Building inside the existing saval repo: fresh Next.js 16.2 + React 19 + Tailwin
 
 ## File A format (confirmed)
 
-Non-Conformance Record sheet. Title row on top; find header row by "Part No." / "Part Name". Latest (right-most) status column decides pending. Orange = pending; green / PK-ref = resolved. Quantity = Affected Qty. Ignore embedded photos.
+Non-Conformance Record sheet. Title row on top; find header row by "Part No." / "Part Name". FINAL (as coded): the **2nd status column left-to-right** decides pending (not Status-2-by-name, not right-most). Orange/yellow/light-green = pending; green / PK-ref = resolved. Quantity = Affected Qty. Ignore embedded photos. See `Doc/decision.md`.
 
 ## Stack
 
@@ -57,8 +57,9 @@ components/upload/FileDropzone.tsx
 ### Step 1.5 — `lib/types.ts`
 
 - `UploadedFile` — fileName, uploadedAt, rowCount, status
-- `PendingPart` — id, fileName, partName, partNumber?, batch?, date?, quantity, status, color?, statusDate?, remarks?, handlingMethod?, processedAt
-- `RequiredPart` — computed only (not stored)
+- `PendingPart` — id, fileName, partName, partNumber?, batch?, date?, quantity, status, color?, processedAt
+- `RequiredPart` — computed only: partName, partNumber?, model?, totalQuantity, countInPending
+- `UniquePart` — computed only: partNumber, partName, totalQuantity (Part No. only)
 - `BackupSnapshot` — version: 1, exportedAt, files, pendingParts
 
 ### Step 1.6 — `lib/indexedDB.ts`
@@ -107,7 +108,7 @@ Wire via `useEffect` in Dashboard / `usePendingData`.
 
 ## Phase 2 — Core intelligence
 
-excelParser (ExcelJS, latest status color/keyword), smart replace-by-fileName, aggregateRequired, PendingTable + RequiredTable, File B export.
+excelParser (ExcelJS, **2nd status column** color/keyword), smart replace-by-fileName, aggregateRequired, PendingTable + RequiredTable, File B export.
 
 ## Phase 3 — Polish and delivery
 
