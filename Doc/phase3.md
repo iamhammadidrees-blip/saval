@@ -1,299 +1,270 @@
-# Phase 3 — Polish and Delivery (step-by-step)
+# Phase 3 — Polish and Delivery (roadmap)
 
 **Project:** Pending Parts Dashboard v2.0  
-**Depends on:** Phase 2 complete (parse File A, smart replace, tables, File B export, IndexedDB persistence)  
-**Out of scope:** New parsing rules, new data models, backend/API, offline PWA service-worker (optional later)
+**Status:** Foundation + Core Intelligence are largely complete. Phase 3 finishes the remaining product gaps and ships to Vercel.  
+**Delivery:** Vercel (primary). Pure client-side app — no API routes, no server secrets.
 
 ---
 
-## Goal
+## Where we are now (already built)
 
-Ship a client-ready product:
+Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 
-1. Manage uploaded files (list + delete one file’s data)
-2. Backup / Restore full JSON snapshot
-3. Clear All with confirmation
-4. Production UX: toasts, loading, errors, last-updated
-5. Responsive layout polish
-6. Build, real-file QA, Vercel deploy
-7. Short user guide for the client
+### Foundation (Phase 1) — done
 
-**Phase 3 exit:** Client can use the live Vercel URL daily — upload, decide from Required view, export File B, backup data, without developer help.
+- Next.js 16 + React 19 + Tailwind v4 + shadcn/ui + sonner
+- `lib/types.ts`, `lib/indexedDB.ts`, Zustand store with hydrate / upsert / remove / clearAll
+- Dashboard shell, SummaryCards, FileDropzone, tabs layout
 
----
+### Core intelligence (Phase 2) — done
 
-## Flow (Phase 3 additions)
+- ExcelJS File A parse (header detection, Status 2 / right-most status, color + keyword pending filter)
+- Smart replace-by-fileName → IndexedDB + store
+- Pending table + Required table (TanStack) + File B / Pending Excel export
+- Upload toasts + parsing loading state on dropzone
+- Decision rules live in `Doc/decision.md` (color for filter only)
 
-```
-Dashboard
-  ├── UploadedFilesList → removeFile(fileName) → IDB + store refresh
-  ├── Backup → exportSnapshot() → download JSON
-  ├── Restore → importSnapshot() → hydrate store
-  ├── Clear All → confirm dialog → clearAll()
-  └── Polish: toasts / loading / empty / responsive / lastUpdated
-        → pnpm build → Vercel → User Guide
-```
+### Later product additions — done
 
----
-
-## Step 3.1 — `UploadedFilesList` component
-
-**File:** `components/upload/UploadedFilesList.tsx`
-
-Show every entry from store `files[]`:
-
-| Column / field | Source |
+| Feature | Where |
 |---|---|
-| File name | `fileName` |
-| Uploaded at | `uploadedAt` (formatted local time) |
-| Pending rows | `rowCount` (or live count from `pendingParts` filtered by fileName) |
-| Actions | Delete button |
+| Pending Status = plain text (no color Badge) | `constants/tableColumns.ts` |
+| `#` index column on tables | `constants/tableColumns.ts` |
+| Required **Model** from batch (first 3 letters, e.g. `ALW6001` → `ALW`) | `utils` + `dataProcessor` + columns |
+| **Models** tab (filter Required by model + per-model export) | `ModelsView.tsx` |
+| **Files Uploaded** tab + per-file delete | `UploadedFilesList.tsx` (uses `window.confirm`) |
+| Unique Parts card + dialog export | `UniquePartsCard.tsx` |
+| Header: Last updated, Download File B, Download Pending | `Dashboard.tsx` |
+| IDB `exportSnapshot` / `importSnapshot` APIs | `lib/indexedDB.ts` (API ready; UI incomplete) |
 
-Behavior:
+### Still open (this Phase 3 roadmap)
 
-1. Delete opens confirm dialog (shadcn `Dialog`):  
-   `"Remove {fileName} and all its pending parts?"`
-2. On confirm → call store `removeFile(fileName)`  
-   (already should call `deleteByFileName` in IndexedDB + update state — verify from Phase 1/2)
-3. Toast: `"Removed {fileName}"`
-4. Empty state: `"No files uploaded yet"`
-
-Place list below FileDropzone (or in a collapsible side panel on desktop).
-
-**Done when:** deleting one of two uploaded files removes only that file’s rows; Required totals update; refresh keeps the remaining file.
+| Gap | Notes |
+|---|---|
+| Backup button | Present in header but **disabled** — needs wiring |
+| Restore | No UI yet (IDB import exists) |
+| Clear All | Store action exists — no header UI / confirm |
+| Confirm dialogs | File delete still uses `window.confirm`; prefer shadcn Dialog |
+| Hydrate loading | Header shows “Loading…” only — optional fuller skeleton |
+| Responsive polish | Summary cards are `grid-cols-4` — tighten mobile |
+| Production build + Vercel | Not deployed yet |
+| User guide | README is still create-next-app default |
 
 ---
 
-## Step 3.2 — Backup JSON (download)
+## Goal (Phase 3 exit)
 
-**Files:** reuse `lib/indexedDB.ts` `exportSnapshot()` + small UI in header / `components/common/BackupRestore.tsx`
+Client can open the **live Vercel URL** and:
 
-1. Button: **Backup**
+1. Upload File A → see Pending / Required / Models  
+2. Download File B (and model / pending exports)  
+3. Backup / Restore / Clear All safely  
+4. Delete one uploaded file without breaking others  
+5. Follow a short user guide without developer help  
+
+---
+
+## Flow (remaining work only)
+
+```
+Dashboard header
+  ├── Backup  → exportSnapshot() → JSON download     [WIRE]
+  ├── Restore → file picker → importSnapshot()       [NEW UI]
+  └── Clear All → Dialog confirm → clearAll()        [NEW UI]
+
+Files Uploaded tab
+  └── Delete → shadcn Dialog (replace window.confirm) [POLISH]
+
+Then: responsive pass → pnpm build → Vercel → USER_GUIDE
+```
+
+---
+
+## Step 3.1 — Wire Backup (download JSON)
+
+**Already exists:** `exportSnapshot()` in `lib/indexedDB.ts`, disabled Backup button in `Dashboard.tsx`.
+
+1. Enable Backup button when `isHydrated`
 2. On click:
-   - `const snapshot = await exportSnapshot()`  
-     (`version: 1`, `exportedAt`, `files`, `pendingParts`)
-   - Download as `pending-parts-backup_YYYY-MM-DD.json`
-3. Toast success with counts: `"Backup saved (N pending rows, M files)"`
-4. Disable if not hydrated or both arrays empty (optional — still allow empty backup)
+   - `const snapshot = await exportSnapshot()`
+   - Download `pending-parts-backup_YYYY-MM-DD.json`
+3. Toast: `"Backup saved (N pending rows, M files)"`
+4. Handle errors with toast (never crash)
 
-**Done when:** downloaded JSON is valid and contains current data.
+Optional: allow empty backup (still useful for testing).
 
----
-
-## Step 3.3 — Restore JSON (import)
-
-1. Button: **Restore** → hidden `<input type="file" accept="application/json,.json" />`
-2. Read file as text → `JSON.parse`
-3. Validate:
-   - `version === 1`
-   - `files` and `pendingParts` are arrays
-   - basic field checks (e.g. each part has `id`, `fileName`, `partName`, `quantity`)
-4. Confirm dialog:  
-   `"This will replace all current data. Continue?"`
-5. On confirm → `importSnapshot(snapshot)` then store `hydrate()` (or set state from snapshot directly)
-6. Toast success / error for invalid files
-
-**Done when:** restore after clear (or on another browser profile) brings back exact pending + files; tables match.
+**Done when:** clicking Backup downloads valid JSON that matches current IndexedDB data.
 
 ---
 
-## Step 3.4 — Clear All
+## Step 3.2 — Restore (import JSON)
 
-1. Button: **Clear All** (destructive style)
-2. Confirm dialog with strong copy:  
+1. Add **Restore** button + hidden `<input accept=".json,application/json">`
+2. Parse + validate (`version === 1`, arrays present; optional field checks)
+3. Confirm dialog: `"This will replace all current data. Continue?"`
+4. `importSnapshot(snapshot)` then refresh store (re-hydrate or set state from snapshot)
+5. Update `lastUpdated`; toast success / reject invalid files
+
+**Done when:** Restore after Clear (or on a fresh browser profile) restores files + pending rows exactly.
+
+---
+
+## Step 3.3 — Clear All (with confirm)
+
+**Already exists:** `clearAll()` in Zustand + IndexedDB.
+
+1. Add destructive **Clear All** button in header (or under Files tab)
+2. Confirm dialog copy:  
    `"Delete all uploaded files and pending parts? This cannot be undone. Use Backup first."`
-3. On confirm → `clearAll()` (IndexedDB wipe + reset store)
+3. On confirm → `clearAll()` → empty UI / zero cards
 4. Toast: `"All data cleared"`
-5. UI returns to empty states; cards show zeros
 
 **Done when:** Clear All empties IDB; refresh stays empty.
 
 ---
 
-## Step 3.5 — Loading states
+## Step 3.4 — Polish Files Uploaded delete UX
 
-Cover these moments:
+**Already exists:** `UploadedFilesList` with delete + toasts.
 
-| Moment | UX |
+Upgrade only:
+
+1. Replace `window.confirm` with shadcn `Dialog`
+2. Keep loading disable on the Delete button while in flight
+3. Confirm empty state copy is clear
+
+**Done when:** delete one of two files leaves the other intact; Required / Models / cards update; refresh persists.
+
+---
+
+## Step 3.5 — Loading + toast audit (light pass)
+
+Mostly done. Verify / fill gaps:
+
+| Moment | Expected |
 |---|---|
-| Initial hydrate | Full-page or dashboard skeleton / spinner until `isHydrated` |
-| Parsing upload(s) | Disable dropzone; show progress text `"Parsing N file(s)…"` |
-| Export File B / Pending | Button loading spinner; disable double-clicks |
-| Backup / Restore / Clear / Delete | Button or dialog action loading |
+| Hydrate | Header “Loading…” or small dashboard skeleton until `isHydrated` |
+| Upload parse | Dropzone disabled + spinner (done) |
+| Export File B / Pending / Model | Button loading / `isExporting` (mostly done) |
+| Backup / Restore / Clear / Delete | Disable actions while running |
 
-Rules:
+Toast audit: upload success/fail, export success/fail, backup/restore/clear/delete — human messages only, no stack traces in UI.
 
-- Never leave the UI interactive in a half-written state
-- Prefer store `isLoading` + local flags for short actions
-
-**Done when:** slow parse (large Excel) does not allow a second overlapping upload that corrupts state.
+**Done when:** slow uploads cannot double-fire; every failure path shows a clear toast.
 
 ---
 
-## Step 3.6 — Toasts and error handling
+## Step 3.6 — Responsive polish
 
-Use sonner (wired in Phase 1). Standardize messages:
+Quick pass for client devices:
 
-| Event | Type | Example |
-|---|---|---|
-| Upload success | success | `"FileA.xlsx: 18 pending (replaced previous)"` |
-| Upload partial | warning | `"2 files OK, 1 failed"` |
-| Parse failure | error | `"Could not find header row (Part No. / Part Name)"` |
-| Bad file type | error | `"Only .xlsx / .xls files are supported"` |
-| Export done | success | `"File B downloaded"` |
-| Backup / Restore | success / error | as above |
-| Delete / Clear | success | as above |
-| Unexpected | error | `"Something went wrong — try again"` + `console.error` |
+1. **Mobile:** SummaryCards → 2×2 or 1-col; header actions wrap; tables keep horizontal scroll
+2. **Desktop:** keep current max-width layout
+3. Dropzone + tabs usable on ~375px width
+4. Status in Pending stays **text-only** (no color fills in UI — decision color stays in parser only)
 
-Also:
-
-- Catch ExcelJS / IDB errors in upload + export paths
-- Never show raw stack traces in the UI
-- Keep empty-state copy helpful (not just blank white)
-
-**Done when:** every failure path shows a human message and the app stays usable.
+**Done when:** no broken layout at phone + laptop widths.
 
 ---
 
-## Step 3.7 — Last updated + header actions
+## Step 3.7 — Production build verification
 
-1. Show **Last updated** in header from store `lastUpdated` (format: local date/time; `"—"` if null)
-2. Update `lastUpdated` on: upload, delete file, restore, clear
-3. Group header actions clearly:
-   - Primary: Download File B
-   - Secondary: Download Pending, Backup, Restore
-   - Destructive: Clear All
-4. Optional: disable exports when no data
-
-**Done when:** timestamp moves after each mutating action and survives refresh (derive from max `processedAt` / `uploadedAt` if needed).
-
----
-
-## Step 3.8 — Responsive UI polish
-
-Pass over the dashboard for desktop + mobile:
-
-1. **Mobile (< md):**
-   - Stack SummaryCards 2×2 or single column
-   - Tables: horizontal scroll (sticky first column optional)
-   - Dropzone full width; file list stacked
-   - Header actions → wrap or dropdown menu if crowded
-2. **Desktop:**
-   - Comfortable max-width content (e.g. full width with padding)
-   - Tabs + tables readable without cramped columns
-3. Visual direction (keep industrial / clean; avoid purple / cream AI defaults):
-   - Consistent spacing, typography hierarchy
-   - Status color badges readable (orange / green)
-4. Accessibility basics: button labels, dialog focus, contrast on badges
-
-**Done when:** usable on phone width (~375px) and laptop (~1280px) without broken layout.
-
----
-
-## Step 3.9 — Production build verification
-
-1. `pnpm lint` — fix introduced issues
+1. `pnpm lint` — fix blockers
 2. `pnpm build` — must succeed (Next 16)
-3. `pnpm start` (or preview) — smoke the production bundle:
-   - hydrate
+3. `pnpm start` smoke:
+   - hydrate from IndexedDB
    - upload sample File A
-   - export File B
-   - backup / restore
-   - delete file / clear all
-4. Fix any client-only / SSR issues (ExcelJS, IndexedDB, dropzone must stay behind `"use client"`)
+   - Pending / Required / Models look correct (Model = first 3 batch letters)
+   - Download File B + Pending + model export
+   - Backup → Clear → Restore
+   - Delete one file
+4. Confirm ExcelJS / IndexedDB / dropzone stay behind `"use client"`
 
-**Done when:** production build passes and critical paths work outside `next dev`.
+**Done when:** critical paths work in the production bundle (not only `next dev`).
 
 ---
 
-## Step 3.10 — Deploy to Vercel
+## Step 3.8 — Deploy to Vercel
 
-Primary delivery (confirmed earlier):
-
-1. Push repo to GitHub (if not already)
-2. Import project in Vercel → framework Next.js → deploy
-3. Confirm env: **no secrets required** (pure client app)
-4. Smoke on production URL:
-   - Upload File A
-   - Refresh (IndexedDB is per-browser — expected)
-   - Export File B
+1. Push repo to GitHub (if needed)
+2. Import in Vercel → Next.js → deploy  
+3. Env: **none required**
+4. Production smoke on the live URL (same as 3.7 happy path)
 5. Share URL with client
 
-Notes to tell client:
+**Tell the client:**
 
-- Data lives in **their browser** (IndexedDB), not on Vercel servers
-- Different PC / browser = empty until they Restore a backup or re-upload
-- Recommend Backup before clearing browser data
+- Data lives in **their browser** (IndexedDB), not on Vercel
+- New PC / browser = empty until Restore or re-upload
+- Backup before clearing site data
 
-**Done when:** production URL works for the happy path.
-
----
-
-## Step 3.11 — User guide (short)
-
-Add a concise section to `README.md` and/or `Doc/USER_GUIDE.md` (1–2 pages worth):
-
-1. What the app does (Pending vs Required)
-2. How to upload File A (drag & drop, multi-file, replace same name)
-3. How to read Summary cards + Required tab (decision view)
-4. How to download File B
-5. How to delete one file / Clear All
-6. How to Backup / Restore (and when to use it)
-7. Browser tip: Chrome/Edge recommended; do not clear site data without Backup
-8. Production URL link
-
-Optional: 15-min training call checklist (talking points only — not a script dump).
-
-**Done when:** a non-developer can follow the guide without asking basic questions.
+**Done when:** production URL works for the daily workflow.
 
 ---
 
-## Step 3.12 — Final acceptance checklist (Phase 3 done)
+## Step 3.9 — User guide
 
-### Feature
+Replace / extend the default README (and optionally add `Doc/USER_GUIDE.md`):
 
-- [ ] Uploaded files list shows all files with row counts
-- [ ] Delete one file removes only its parts; other files remain
+1. What the app does (Pending vs Required vs Models)
+2. Upload File A (multi-file, same name = replace)
+3. How pending is decided (Status 2 color/keywords — pointer to `Doc/decision.md`)
+4. Model = first 3 letters of Batch
+5. Download File B / Pending / per-model export
+6. Files Uploaded → delete one file
+7. Backup / Restore / Clear All
+8. Browser tip: Chrome/Edge; don’t clear site data without Backup
+9. Production URL
+
+**Done when:** a non-developer can run the daily flow from the guide alone.
+
+---
+
+## Step 3.10 — Final acceptance checklist
+
+### Already expected to pass (regression)
+
+- [ ] File A parse + pending filter (color/keywords) still correct
+- [ ] Smart replace by filename still works
+- [ ] Required aggregation + Model column correct (`ALW6001` → `ALW`)
+- [ ] Models tab filter + export works
+- [ ] File B / Pending exports match tables
+- [ ] Refresh persistence (IndexedDB) works
+- [ ] Pending Status is text-only (no color Badge)
+- [ ] `#` index columns present
+
+### Phase 3 must pass
+
 - [ ] Backup downloads valid JSON
-- [ ] Restore replaces data after confirm; invalid JSON rejected
+- [ ] Restore replaces data after confirm; bad JSON rejected
 - [ ] Clear All wipes everything after confirm
-- [ ] Last updated reflects mutations
+- [ ] File delete uses confirm dialog; only that file’s rows removed
 - [ ] Loading states block double actions
-- [ ] Toasts cover success and failure paths
-
-### Quality
-
+- [ ] Toasts cover success and failure for new actions
 - [ ] Responsive on mobile + desktop
 - [ ] `pnpm build` succeeds
-- [ ] Production smoke test passed
+- [ ] Production smoke passed
 - [ ] Vercel URL live
 - [ ] User guide written
 
-### Regression (from Phase 2)
-
-- [ ] Parse + pending filter still correct on sample File A
-- [ ] Smart replace by filename still works
-- [ ] Required aggregation + File B export still match
-- [ ] Refresh persistence still works
-
-**Phase 3 exit:** polished, documented, deployed. Project delivery complete for the client.
+**Phase 3 exit:** polished, documented, deployed. Client delivery complete.
 
 ---
 
-## Files touched in Phase 3 (new or extended)
+## Files to touch in Phase 3
 
 ```
-components/upload/UploadedFilesList.tsx   ← new
-components/common/BackupRestore.tsx       ← new (or inline in header)
-components/common/ConfirmDialog.tsx       ← optional shared wrapper
-components/dashboard/*                    ← wire list + polish layout
-store/useAppStore.ts                      ← verify removeFile / clearAll / import path
-lib/indexedDB.ts                          ← verify exportSnapshot / importSnapshot validation
-hooks/usePendingData.ts                   ← lastUpdated helpers if needed
-app/layout.tsx / globals.css              ← minor polish
-README.md                                 ← user guide section
-Doc/USER_GUIDE.md                         ← optional dedicated guide
+components/dashboard/Dashboard.tsx          ← wire Backup / Restore / Clear All
+components/common/BackupRestore.tsx         ← optional extracted component
+components/upload/UploadedFilesList.tsx     ← Dialog confirm polish
+store/useAppStore.ts                        ← optional restoreFromSnapshot helper
+lib/indexedDB.ts                            ← already has export/import (verify only)
+app/globals.css                             ← responsive tweaks if needed
+README.md                                   ← user guide
+Doc/USER_GUIDE.md                           ← optional dedicated guide
 ```
+
+**Do not rework:** parser, pending filter, aggregation, Models tab core logic, or decision rules — unless a deploy bug forces a fix.
 
 ---
 
@@ -301,10 +272,9 @@ Doc/USER_GUIDE.md                         ← optional dedicated guide
 
 | Order | Step | Focus |
 |------:|------|--------|
-| 1 | 3.1 | UploadedFilesList + delete |
-| 2 | 3.2–3.4 | Backup, Restore, Clear All |
-| 3 | 3.5–3.7 | Loading, toasts/errors, last-updated |
-| 4 | 3.8 | Responsive polish |
-| 5 | 3.9 | lint + production build smoke |
-| 6 | 3.10 | Vercel deploy |
-| 7 | 3.11–3.12 | User guide + acceptance checklist |
+| 1 | 3.1–3.3 | Backup + Restore + Clear All |
+| 2 | 3.4–3.5 | File-delete Dialog + loading/toast audit |
+| 3 | 3.6 | Responsive polish |
+| 4 | 3.7 | lint + production build smoke |
+| 5 | 3.8 | Vercel deploy |
+| 6 | 3.9–3.10 | User guide + acceptance checklist |
