@@ -97,7 +97,7 @@ async function buildRequiredPartsWorkbook(
 
   for (const part of parts) {
     worksheet.addRow([
-      part.model ?? "",
+      requiredModelLabel(part.model),
       part.partNumber ?? "",
       part.partName,
       part.totalQuantity,
@@ -118,18 +118,16 @@ async function buildRequiredPartsWorkbook(
 
 async function buildModelPartsWorkbook(
   parts: RequiredPart[],
-  model: string,
 ): Promise<ExcelJS.Workbook> {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(MODEL_PARTS_SHEET_NAME);
-  const modelLabel = requiredModelLabel(model);
 
   worksheet.addRow([...MODEL_PARTS_HEADERS]);
   styleHeaderRow(worksheet);
 
   for (const part of parts) {
     worksheet.addRow([
-      requiredModelLabel(part.model) || modelLabel,
+      requiredModelLabel(part.model),
       part.partNumber ?? "",
       part.partName,
       part.totalQuantity,
@@ -252,7 +250,7 @@ export async function downloadModelParts(
 
   assertBrowser();
 
-  const workbook = await buildModelPartsWorkbook(parts, model);
+  const workbook = await buildModelPartsWorkbook(parts);
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
