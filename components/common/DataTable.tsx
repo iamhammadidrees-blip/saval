@@ -99,7 +99,7 @@ export function DataTable<TData>({
 
   return (
     <div className={cn("flex min-h-0 flex-col gap-3", className)}>
-      <div className="flex shrink-0 items-center justify-between gap-3">
+      <div className="relative flex shrink-0 items-center justify-center gap-3">
         <Input
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
@@ -107,7 +107,7 @@ export function DataTable<TData>({
           className="max-w-sm"
           aria-label="Search table"
         />
-        <p className="text-xs text-muted-foreground tabular-nums">
+        <p className="absolute right-0 text-xs text-muted-foreground tabular-nums">
           {rows.length.toLocaleString()} row{rows.length === 1 ? "" : "s"}
         </p>
       </div>

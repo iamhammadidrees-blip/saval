@@ -71,7 +71,7 @@ export function ModelsView() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-3">
         <label className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Model</span>
           <select

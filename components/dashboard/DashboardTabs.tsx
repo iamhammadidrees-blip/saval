@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function DashboardTabs() {
   return (
     <Tabs defaultValue="pending">
-      <TabsList>
+      <TabsList className="mx-auto">
         <TabsTrigger value="pending" className="px-4">
           Pending
         </TabsTrigger>
