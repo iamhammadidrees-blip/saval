@@ -28,6 +28,8 @@ interface DataTableProps<TData> {
   data: TData[];
   emptyMessage: string;
   searchPlaceholder?: string;
+  /** Optional classes for the bordered table wrapper (e.g. max-height + overflow). */
+  tableClassName?: string;
 }
 
 function SortIcon({
@@ -55,6 +57,7 @@ export function DataTable<TData>({
   data,
   emptyMessage,
   searchPlaceholder = "Search…",
+  tableClassName,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -104,7 +107,7 @@ export function DataTable<TData>({
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="rounded-xl border bg-card">
+        <div className={cn("rounded-xl border bg-card", tableClassName)}>
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
