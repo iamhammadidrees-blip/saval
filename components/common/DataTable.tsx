@@ -28,8 +28,10 @@ interface DataTableProps<TData> {
   data: TData[];
   emptyMessage: string;
   searchPlaceholder?: string;
-  /** Optional classes for the bordered table wrapper (e.g. max-height + overflow). */
+  /** Optional classes for the scrollable table area (e.g. max-height + overflow). */
   tableClassName?: string;
+  /** Keep # / column headers visible while rows scroll. */
+  stickyHeader?: boolean;
 }
 
 function SortIcon({
@@ -58,6 +60,7 @@ export function DataTable<TData>({
   emptyMessage,
   searchPlaceholder = "Search…",
   tableClassName,
+  stickyHeader = false,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -107,9 +110,22 @@ export function DataTable<TData>({
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         </div>
       ) : (
-        <div className={cn("rounded-xl border bg-card", tableClassName)}>
-          <Table>
-            <TableHeader>
+        <div
+          className={cn(
+            "rounded-xl border bg-card",
+            stickyHeader ? "overflow-hidden" : tableClassName,
+          )}
+        >
+          <Table
+            containerClassName={stickyHeader ? tableClassName : undefined}
+          >
+            <TableHeader
+              className={
+                stickyHeader
+                  ? "sticky top-0 z-10 bg-card [&_tr]:border-b"
+                  : undefined
+              }
+            >
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="hover:bg-transparent">
                   {headerGroup.headers.map((header) => {
@@ -117,7 +133,10 @@ export function DataTable<TData>({
                     const sorted = header.column.getIsSorted();
 
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className={stickyHeader ? "bg-card" : undefined}
+                      >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
                             type="button"

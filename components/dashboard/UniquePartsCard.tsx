@@ -107,6 +107,7 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
             emptyMessage="No unique parts"
             searchPlaceholder="Search by Part No.…"
             tableClassName="max-h-[min(60vh,28rem)] overflow-y-auto"
+            stickyHeader
           />
         </DialogContent>
       </Dialog>
