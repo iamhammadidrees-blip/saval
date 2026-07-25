@@ -94,8 +94,8 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
+        <DialogContent className="flex h-[80vh] w-[60vw] max-w-[60vw] flex-col gap-4 overflow-hidden sm:max-w-[60vw]">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Unique Parts</DialogTitle>
             <DialogDescription>
               Quantities summed by Part No. across all batches and models.
@@ -106,7 +106,8 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
             data={uniqueParts}
             emptyMessage="No unique parts"
             searchPlaceholder="Search by Part No.…"
-            tableClassName="max-h-[min(60vh,28rem)] overflow-y-auto"
+            className="min-h-0 flex-1"
+            tableClassName="h-full overflow-y-auto"
             stickyHeader
           />
         </DialogContent>

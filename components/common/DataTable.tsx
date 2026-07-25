@@ -28,6 +28,8 @@ interface DataTableProps<TData> {
   data: TData[];
   emptyMessage: string;
   searchPlaceholder?: string;
+  /** Optional classes for the outer wrapper. */
+  className?: string;
   /** Optional classes for the scrollable table area (e.g. max-height + overflow). */
   tableClassName?: string;
   /** Keep # / column headers visible while rows scroll. */
@@ -59,6 +61,7 @@ export function DataTable<TData>({
   data,
   emptyMessage,
   searchPlaceholder = "Search…",
+  className,
   tableClassName,
   stickyHeader = false,
 }: DataTableProps<TData>) {
@@ -91,8 +94,8 @@ export function DataTable<TData>({
   const rows = table.getRowModel().rows;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
+    <div className={cn("flex min-h-0 flex-col gap-3", className)}>
+      <div className="flex shrink-0 items-center justify-between gap-3">
         <Input
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
@@ -106,18 +109,22 @@ export function DataTable<TData>({
       </div>
 
       {data.length === 0 ? (
-        <div className="flex min-h-64 items-center justify-center rounded-xl border border-dashed bg-card p-8 text-center">
+        <div className="flex min-h-64 flex-1 items-center justify-center rounded-xl border border-dashed bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         </div>
       ) : (
         <div
           className={cn(
-            "rounded-xl border bg-card",
-            stickyHeader ? "overflow-hidden" : tableClassName,
+            "min-h-0 rounded-xl border bg-card",
+            stickyHeader ? "flex-1 overflow-hidden" : tableClassName,
           )}
         >
           <Table
-            containerClassName={stickyHeader ? tableClassName : undefined}
+            containerClassName={
+              stickyHeader
+                ? cn("h-full max-h-full overflow-y-auto", tableClassName)
+                : undefined
+            }
           >
             <TableHeader
               className={
