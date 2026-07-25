@@ -16,6 +16,7 @@ export function RequiredTable() {
       data={requiredParts}
       emptyMessage="No required parts yet"
       searchPlaceholder="Search by Part No.…"
+      pageStickyHeader
     />
   );
 }

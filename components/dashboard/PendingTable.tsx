@@ -16,6 +16,7 @@ export function PendingTable() {
       data={pendingParts}
       emptyMessage="Upload File A to see pending parts"
       searchPlaceholder="Search by Part No.…"
+      pageStickyHeader
     />
   );
 }

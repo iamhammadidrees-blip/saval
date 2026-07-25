@@ -119,6 +119,7 @@ export function ModelsView() {
         data={filteredParts}
         emptyMessage={emptyMessage}
         searchPlaceholder="Search by Part No.…"
+        pageStickyHeader
       />
     </div>
   );

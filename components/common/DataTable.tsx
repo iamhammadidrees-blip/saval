@@ -32,8 +32,10 @@ interface DataTableProps<TData> {
   className?: string;
   /** Optional classes for the scrollable table area (e.g. max-height + overflow). */
   tableClassName?: string;
-  /** Keep # / column headers visible while rows scroll. */
+  /** Keep headers visible while scrolling inside the table container. */
   stickyHeader?: boolean;
+  /** Keep headers fixed at the top of the page while the document scrolls. */
+  pageStickyHeader?: boolean;
 }
 
 function SortIcon({
@@ -64,9 +66,11 @@ export function DataTable<TData>({
   className,
   tableClassName,
   stickyHeader = false,
+  pageStickyHeader = false,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const headerStuck = stickyHeader || pageStickyHeader;
 
   const table = useReactTable({
     data,
@@ -123,12 +127,14 @@ export function DataTable<TData>({
             containerClassName={
               stickyHeader
                 ? cn("h-full max-h-full overflow-y-auto", tableClassName)
-                : undefined
+                : pageStickyHeader
+                  ? "overflow-x-clip"
+                  : undefined
             }
           >
             <TableHeader
               className={
-                stickyHeader
+                headerStuck
                   ? "sticky top-0 z-10 bg-card [&_tr]:border-b"
                   : undefined
               }
@@ -142,7 +148,7 @@ export function DataTable<TData>({
                     return (
                       <TableHead
                         key={header.id}
-                        className={stickyHeader ? "bg-card" : undefined}
+                        className={headerStuck ? "bg-card" : undefined}
                       >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
