@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pending Parts Dashboard — Design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Inter", sans-serif;
+    color: #23272e;
+    background:
+      radial-gradient(90% 40% at 50% 0%, #ffffff 0%, transparent 70%),
+      linear-gradient(180deg, #f7f8fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+  }
+  pre.token-block {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    background: #23272e;
+    color: #f4f5f7;
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { createElement: h } = React;
+
+/* ---------- brand (matches app) ---------- */
+
+const BRAND = {
+  product: "Pending Parts Dashboard",
+  tagline: "Track and manage pending parts.",
+  theme: "Polished Bay — silver · shine · edgy",
+  tabs: ["Pending", "Required", "Models", "Files Uploaded"],
+  cards: ["Total Pending", "Total Qty", "Unique Parts", "Files Uploaded"],
+  actions: ["Download File B", "Download Pending", "Backup", "View", "Download"],
+};
+
+/* ---------- color tokens ---------- */
+
+const TOKENS = [
+  { token: "--chrome", name: "Chrome", hex: "#FAFBFC", app: "--background (page top)", usage: "Page background top, specular edges" },
+  { token: "--silver", name: "Silver", hex: "#E3E6EA", app: "--muted / plate face", usage: "Stat plates, rail track, page bottom" },
+  { token: "--steel", name: "Steel", hex: "#C2C7CE", app: "--border / --input", usage: "Hairline borders, dashed dropzone" },
+  { token: "--ink", name: "Ink", hex: "#23272E", app: "--foreground / --primary", usage: "Body text, active tab, primary keys" },
+  { token: "--ink-soft", name: "Ink soft", hex: "#5C6370", app: "--muted-foreground", usage: "Captions, timestamps, hints" },
+  { token: "--recess", name: "Recess", hex: "#D5D9DE", app: "custom surface", usage: "Sunken intake bay tint" },
+  { token: "--plate-top", name: "Plate top", hex: "#3A404A", app: "active plate stop", usage: "Charcoal gradient light stop" },
+  { token: "--plate-bottom", name: "Plate bottom", hex: "#2B3038", app: "active plate stop", usage: "Charcoal gradient dark stop" },
+  { token: "--on-plate", name: "On-plate", hex: "#F4F5F7", app: "--primary-foreground", usage: "Text on charcoal plates" },
+  { token: "--rust", name: "Rust", hex: "#C45C26", app: "accent only", usage: "Active baseline + header slash — never fill" },
+  { token: "--status-orange", name: "Status orange", hex: "#FFC000", app: "Excel pending", usage: "Need to Order" },
+  { token: "--status-yellow", name: "Status yellow", hex: "#FFFF00", app: "Excel pending", usage: "Ordered / under observation" },
+  { token: "--status-lightgreen", name: "Status light green", hex: "#A9D08E", app: "Excel pending", usage: "In transit / light pending" },
+  { token: "--status-green", name: "Status green", hex: "#92D050", app: "Excel resolved", usage: "Resolved — excluded from dashboard" },
+];
+
+const CORE = [
+  { name: "Chrome", hex: "#FAFBFC", token: "--chrome", role: "Page top light", usage: "Page background top, specular 1px edges, key faces at rest", dark: true },
+  { name: "Silver", hex: "#E3E6EA", token: "--silver", role: "Panel face", usage: "Stat plates, rail track, page background bottom", dark: true },
+  { name: "Steel", hex: "#C2C7CE", token: "--steel", role: "Seam / border", usage: "All hairline borders, dashed bay outline, recess tint", dark: true },
+  { name: "Ink", hex: "#23272E", token: "--ink", role: "Text / active plate", usage: "Body text, charcoal active tab and primary key plates", dark: false },
+  { name: "Rust", hex: "#C45C26", token: "--rust", role: "The one accent", usage: "2px base-line on active tab + primary key, header slash", dark: false },
+];
+
+const SUPPORT = [
+  { name: "Ink soft", hex: "#5C6370", token: "--ink-soft", role: "Secondary text", dark: false },
+  { name: "Recess", hex: "#D5D9DE", token: "--recess", role: "Sunken surface", dark: true },
+  { name: "Plate top", hex: "#3A404A", token: "--plate-top", role: "Charcoal light stop", dark: false },
+  { name: "On-plate", hex: "#F4F5F7", token: "--on-plate", role: "Text on charcoal", dark: true },
+];
+
+const SURFACES = [
+  { name: "Stat plate / idle key", css: "linear-gradient(180deg,#FDFDFE,#E3E6EA)", edge: "Steel seam + chrome top edge + 45° corner shear" },
+  { name: "Rail track", css: "linear-gradient(180deg,#EDEFF2,#E2E5E9)", edge: "Steel seam, keys sit 6px inset" },
+  { name: "Active plate", css: "linear-gradient(180deg,#3A404A,#2B3038)", edge: "Border #22262D + inset 2px rust base-line", darkText: true, rustLine: true },
+  { name: "Intake bay (recessed)", css: "radial-gradient(120% 90% at 50% 15%,#FFFFFF 0%,#F1F2F4 45%,#D5D9DE 100%)", edge: "Dashed steel outline + inset shadow (sunken)", dashed: true, inset: true },
+  { name: "Worksheet header strip", css: "repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 1px,transparent 1px 3px), linear-gradient(180deg,#EEF0F2,#E2E5E9)", edge: "Brushed grain: 1px chrome lines every 3px" },
+];
+
+const STATUS = [
+  { hex: "#FFC000", token: "--status-orange", label: "Orange", meaning: "Need to Order (pending)" },
+  { hex: "#FFFF00", token: "--status-yellow", label: "Yellow", meaning: "Ordered (pending)" },
+  { hex: "#A9D08E", token: "--status-lightgreen", label: "Light green", meaning: "In Transit (pending)" },
+  { hex: "#92D050", token: "--status-green", label: "Green", meaning: "Resolved — excluded from dashboard" },
+];
+
+const APP_TABLES = [
+  {
+    tab: "Pending",
+    does: "Raw pending rows from Excel (2nd status column; orange / yellow / light green).",
+    columns: "# · Date · Batch · Part No. · Part Name · Qty · Status",
+    sample: "12 · 21-Jul · XKN11A · 5206110XKN11A · Bracket · 176 · Need to Order",
+  },
+  {
+    tab: "Required",
+    does: "Aggregates pending by Part No + Model (first 3 letters of batch). Same part+model sums qty.",
+    columns: "# · Model · Part No. · Part Name · Total Qty · Count in Pending",
+    sample: "XKN · 5206110XKN11A · Bracket · 352 · 2",
+  },
+  {
+    tab: "Models",
+    does: "Filters Required by selected model. Empty model shows as UNKNOWN. Download File B / Pending here.",
+    columns: "# · Model · Part No. · Part Name · Qty",
+    sample: "UNKNOWN · 5206110XKN11A · Bracket · 48",
+  },
+  {
+    tab: "Unique Parts",
+    does: "Dialog: aggregates by Part No only (skips empty Part No). Card opens View + Download.",
+    columns: "# · Part No. · Part Name · Qty",
+    sample: "5206110XKN11A · Bracket · 400",
+  },
+];
+
+const CONTRAST = [
+  { pair: "Ink #23272E on Chrome #FAFBFC", ratio: "14.5 : 1", verdict: "AAA — body text", fg: "#23272E", bg: "#FAFBFC" },
+  { pair: "On-plate #F4F5F7 on Ink #2B3038", ratio: "12.2 : 1", verdict: "AAA — active labels", fg: "#F4F5F7", bg: "#2B3038" },
+  { pair: "Ink soft #5C6370 on Chrome #FAFBFC", ratio: "5.9 : 1", verdict: "AA — captions, tags", fg: "#5C6370", bg: "#FAFBFC" },
+  { pair: "Rust #C45C26 on Chrome #FAFBFC", ratio: "4.2 : 1", verdict: "Large text / 2px lines only", fg: "#C45C26", bg: "#FAFBFC" },
+];
+
+const TOKEN_CSS = `:root {
+  /* Pending Parts Dashboard — Polished Bay tokens */
+  --chrome: #FAFBFC;
+  --silver: #E3E6EA;
+  --steel: #C2C7CE;
+  --ink: #23272E;
+  --ink-soft: #5C6370;
+  --recess: #D5D9DE;
+  --plate-top: #3A404A;
+  --plate-bottom: #2B3038;
+  --on-plate: #F4F5F7;
+  --rust: #C45C26;
+  --status-orange: #FFC000;
+  --status-yellow: #FFFF00;
+  --status-lightgreen: #A9D08E;
+  --status-green: #92D050;
+  --seam: 1px solid var(--steel);
+  --cut: polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px);
+  --plate-face: linear-gradient(180deg, #FDFDFE 0%, #ECEEF1 55%, #E3E6EA 100%);
+  --rail-face: linear-gradient(180deg, #EDEFF2, #E2E5E9);
+  --active-plate: linear-gradient(180deg, #3A404A, #2B3038);
+}`;
+
+/* ---------- shared styles ---------- */
+
+const seam = "1px solid #C2C7CE";
+const cut = "polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px)";
+const tagStyle = {
+  fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: 12,
+  letterSpacing: "0.14em", textTransform: "uppercase", color: "#5C6370",
+};
+const h2Style = {
+  fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 20,
+  letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14,
+};
+const mono = { fontFamily: "'JetBrains Mono', monospace" };
+
+/* ---------- components ---------- */
+
+function SwatchPlate({ name, hex, token, role, usage, dark }) {
+  return (
+    <div style={{ clipPath: cut, border: seam, background: "linear-gradient(180deg,#FDFDFE,#ECEEF1)", position: "relative" }}>
+      <div style={{ height: 84, background: hex, borderBottom: seam, display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: 10, gap: 8 }}>
+        <span style={{ ...mono, fontSize: 12, fontWeight: 600, color: dark ? "#23272E" : "#F4F5F7" }}>{hex}</span>
+        {token && <span style={{ ...mono, fontSize: 10, fontWeight: 600, color: dark ? "#5C6370" : "rgba(244,245,247,.75)" }}>{token}</span>}
+      </div>
+      <div style={{ padding: "10px 12px 12px" }}>
+        <div style={{ ...tagStyle, color: "#23272E" }}>{name}</div>
+        <div style={{ fontSize: 12, color: "#5C6370", marginTop: 2 }}>{role}</div>
+        {usage && <div style={{ fontSize: 11.5, color: "#5C6370", marginTop: 6, lineHeight: 1.45 }}>{usage}</div>}
+      </div>
+    </div>
+  );
+}
+
+function SurfaceStrip({ name, css, edge, dashed, inset, rustLine }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 14, alignItems: "center" }}>
+      <div style={{
+        height: 56, background: css, borderRadius: 8,
+        border: dashed ? "2px dashed #C2C7CE" : seam,
+        boxShadow: inset
+          ? "inset 0 2px 6px rgba(35,39,46,.12)"
+          : rustLine
+            ? "inset 0 -2px 0 #C45C26, inset 0 1px 0 rgba(255,255,255,.14)"
+            : "inset 0 1px 0 rgba(255,255,255,.9)",
+      }} />
+      <div>
+        <div style={{ ...tagStyle, color: "#23272E", letterSpacing: "0.1em" }}>{name}</div>
+        <div style={{ fontSize: 12, color: "#5C6370", marginTop: 3 }}>{edge}</div>
+        <div style={{ ...mono, fontSize: 11, color: "#5C6370", marginTop: 3 }}>{css}</div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ maxWidth: 1020, margin: "0 auto", padding: "44px 32px 72px", display: "flex", flexDirection: "column", gap: 40 }}>
+
+      <header style={{ borderBottom: seam, paddingBottom: 18 }}>
+        <div style={{ ...tagStyle, color: "#C45C26", marginBottom: 8 }}>Design dashboard</div>
+        <h1 style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: "0.06em", textTransform: "uppercase", lineHeight: 1 }}>
+          Pending Parts <span style={{ color: "#C45C26" }}>/</span> Dashboard
+        </h1>
+        <p style={{ fontSize: 14, color: "#5C6370", marginTop: 8 }}>{BRAND.tagline}</p>
+        <p style={{ ...mono, fontSize: 12.5, color: "#5C6370", marginTop: 6 }}>
+          {BRAND.theme} · color tokens · branding
+        </p>
+      </header>
+
+      <section>
+        <h2 style={h2Style}>Product branding</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ border: seam, borderRadius: 8, background: "#fff", padding: "14px 16px" }}>
+            <div style={tagStyle}>Product name</div>
+            <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: 8 }}>
+              {BRAND.product}
+            </div>
+            <div style={{ fontSize: 13, color: "#5C6370", marginTop: 6 }}>{BRAND.tagline}</div>
+          </div>
+          <div style={{ border: seam, borderRadius: 8, background: "#fff", padding: "14px 16px" }}>
+            <div style={tagStyle}>UI labels (as coded)</div>
+            <div style={{ ...mono, fontSize: 12, marginTop: 10, lineHeight: 1.7, color: "#23272E" }}>
+              Tabs: {BRAND.tabs.join(" · ")}<br />
+              Cards: {BRAND.cards.join(" · ")}<br />
+              Actions: {BRAND.actions.join(" · ")}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>Color tokens</h2>
+        <p style={{ fontSize: 13, color: "#5C6370", marginBottom: 14, lineHeight: 1.5 }}>
+          Brand names map to CSS custom properties for implementation in <span style={mono}>app/globals.css</span> / Tailwind.
+        </p>
+        <div style={{ border: seam, borderRadius: 8, overflow: "hidden", background: "#fff", marginBottom: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "140px 100px 90px 1.2fr 1.4fr", gap: 0, ...tagStyle, background: "#EEF0F2", padding: "10px 12px", borderBottom: seam }}>
+            <span>Token</span><span>Name</span><span>Hex</span><span>App mapping</span><span>Usage</span>
+          </div>
+          {TOKENS.map((t) => (
+            <div key={t.token} style={{ display: "grid", gridTemplateColumns: "140px 100px 90px 1.2fr 1.4fr", gap: 0, alignItems: "center", padding: "10px 12px", borderBottom: seam, fontSize: 12.5 }}>
+              <span style={{ ...mono, fontWeight: 600, fontSize: 11 }}>{t.token}</span>
+              <span style={{ fontWeight: 600 }}>{t.name}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 14, height: 14, background: t.hex, border: "1px solid rgba(35,39,46,.25)", flexShrink: 0 }} />
+                <span style={{ ...mono, fontSize: 11 }}>{t.hex}</span>
+              </span>
+              <span style={{ color: "#5C6370" }}>{t.app}</span>
+              <span style={{ color: "#5C6370" }}>{t.usage}</span>
+            </div>
+          ))}
+        </div>
+        <div style={tagStyle}>Copy for CSS</div>
+        <pre className="token-block" style={{ marginTop: 10 }}>{TOKEN_CSS}</pre>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>Core palette</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
+          {CORE.map((c) => <SwatchPlate key={c.hex} {...c} />)}
+        </div>
+      </section>
+
+      <section style={{
+        clipPath: cut, border: seam, borderLeft: "3px solid #C45C26",
+        background: "linear-gradient(180deg,#FDFDFE,#ECEEF1)", padding: "14px 18px",
+      }}>
+        <div style={{ ...tagStyle, color: "#C45C26" }}>Accent discipline</div>
+        <p style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>
+          Rust (<span style={mono}>--rust</span>) appears in exactly three places on Pending Parts Dashboard:
+          the 2px base-line under the active tab, the same line under the primary key,
+          and the header slash. Never as a fill, never on idle controls, never animated.
+        </p>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>Support tones</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          {SUPPORT.map((c) => <SwatchPlate key={c.hex} {...c} />)}
+        </div>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>Surface recipes</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {SURFACES.map((s) => <SurfaceStrip key={s.name} {...s} />)}
+        </div>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>Status swatches — Excel fills</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          {STATUS.map((s) => (
+            <div key={s.hex} style={{ border: seam, borderRadius: 8, background: "#fff", padding: "12px 14px", display: "flex", gap: 10, alignItems: "center" }}>
+              <span style={{ width: 18, height: 18, background: s.hex, border: "1px solid rgba(35,39,46,.3)", flexShrink: 0 }} />
+              <div>
+                <div style={{ ...mono, fontSize: 11, fontWeight: 600 }}>{s.token}</div>
+                <div style={{ ...mono, fontSize: 11.5, fontWeight: 600, marginTop: 2 }}>{s.hex}</div>
+                <div style={{ fontSize: 11.5, color: "#5C6370", marginTop: 1 }}>{s.meaning}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>App tables</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {APP_TABLES.map((t) => (
+            <div key={t.tab} style={{ border: seam, borderRadius: 8, background: "#fff", padding: "12px 16px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ ...tagStyle, color: "#23272E" }}>{t.tab}</div>
+                <div style={{ ...mono, fontSize: 11, color: "#5C6370" }}>{t.columns}</div>
+              </div>
+              <div style={{ fontSize: 13, color: "#5C6370", marginTop: 6, lineHeight: 1.45 }}>{t.does}</div>
+              <div style={{ ...mono, fontSize: 12.5, fontWeight: 600, marginTop: 8, color: "#23272E" }}>{t.sample}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 style={h2Style}>Contrast pairs (approx.)</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          {CONTRAST.map((c) => (
+            <div key={c.pair} style={{ border: seam, borderRadius: 8, overflow: "hidden", background: "#fff" }}>
+              <div style={{ background: c.bg, color: c.fg, padding: "16px 14px", fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: "0.05em", borderBottom: seam }}>
+                Aa 176
+              </div>
+              <div style={{ padding: "10px 12px" }}>
+                <div style={{ ...mono, fontSize: 13, fontWeight: 600 }}>{c.ratio}</div>
+                <div style={{ fontSize: 11.5, color: "#5C6370", marginTop: 2, lineHeight: 1.4 }}>{c.pair}</div>
+                <div style={{ fontSize: 11.5, marginTop: 4, fontWeight: 600 }}>{c.verdict}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer style={{ borderTop: seam, paddingTop: 14 }}>
+        <p style={{ ...mono, fontSize: 11.5, color: "#5C6370" }}>
+          Pending Parts Dashboard · design-dashboard · source Doc/ui-preview-silver.html · tokens for app/globals.css · React {React.version}
+        </p>
+      </footer>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

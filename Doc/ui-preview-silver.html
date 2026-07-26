@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pending Parts Dashboard — UI demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  /* Pending Parts Dashboard — Polished Bay tokens (from preview/palette.html) */
+  :root {
+    --chrome: #FAFBFC;
+    --silver: #E3E6EA;
+    --steel: #C2C7CE;
+    --ink: #23272E;
+    --ink-soft: #5C6370;
+    --recess: #D5D9DE;
+    --plate-top: #3A404A;
+    --plate-bottom: #2B3038;
+    --on-plate: #F4F5F7;
+    --rust: #C45C26;
+    --status-orange: #FFC000;
+    --status-yellow: #FFFF00;
+    --status-lightgreen: #A9D08E;
+    --status-green: #92D050;
+    --seam: 1px solid var(--steel);
+    --cut: polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px);
+    --plate-face: linear-gradient(180deg, #FDFDFE 0%, #ECEEF1 55%, #E3E6EA 100%);
+    --rail-face: linear-gradient(180deg, #EDEFF2, #E2E5E9);
+    --active-plate: linear-gradient(180deg, var(--plate-top), var(--plate-bottom));
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Inter", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(90% 40% at 50% 0%, #ffffff 0%, transparent 70%),
+      linear-gradient(180deg, #f7f8fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 32px 64px; display: flex; flex-direction: column; gap: 28px; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: var(--seam);
+    position: relative;
+  }
+  header::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px;
+    background: rgba(255,255,255,.9);
+  }
+  .brand { display: flex; flex-direction: column; gap: 4px; }
+  .brand .eyebrow {
+    font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--rust);
+  }
+  .brand h1 {
+    font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 30px;
+    letter-spacing: 0.06em; text-transform: uppercase; line-height: 1;
+  }
+  .brand h1 span { color: var(--rust); }
+  .brand .tagline { font-size: 13px; color: var(--ink-soft); }
+  .brand .meta { font-size: 12.5px; color: var(--ink-soft); font-family: "JetBrains Mono", monospace; }
+  .actions { display: flex; gap: 10px; }
+  .key {
+    font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 13px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 9px 16px 8px; cursor: pointer;
+    color: var(--ink);
+    background: var(--plate-face);
+    border: var(--seam); border-radius: 6px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(35,39,46,.08);
+  }
+  .key:hover { background: linear-gradient(180deg, #ffffff, #f0f2f4); }
+  .key:active { box-shadow: inset 0 2px 4px rgba(35,39,46,.14); }
+  .key.primary {
+    background: var(--active-plate); color: var(--on-plate); border-color: #22262d;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -2px 0 var(--rust);
+  }
+  .key.primary:hover { background: linear-gradient(180deg, #444a54, #2f343c); }
+
+  /* ---------- stat plates ---------- */
+  .plates { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .plate {
+    clip-path: var(--cut);
+    background: var(--plate-face);
+    border: var(--seam);
+    padding: 16px 18px 14px;
+    position: relative;
+  }
+  .plate::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: rgba(255,255,255,.95);
+  }
+  .plate .tag {
+    font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .plate .num {
+    font-family: "JetBrains Mono", monospace; font-weight: 600; font-size: 34px;
+    line-height: 1.15; margin-top: 2px;
+  }
+  .plate .sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+  .plate .mini { display: flex; gap: 8px; margin-top: 10px; }
+  .mini .key { padding: 5px 10px 4px; font-size: 11px; }
+
+  /* ---------- intake bay ---------- */
+  .bay {
+    width: 100%; max-width: 620px; margin: 0 auto;
+    border: 2px dashed var(--steel); border-radius: 10px;
+    background:
+      radial-gradient(120% 90% at 50% 15%, #ffffff 0%, #f1f2f4 45%, var(--recess) 100%);
+    box-shadow: inset 0 2px 6px rgba(35,39,46,.10), inset 0 -1px 0 rgba(255,255,255,.8);
+    padding: 34px 24px; text-align: center; cursor: pointer;
+  }
+  .bay:hover { border-color: #9aa1ab; }
+  .bay .icon { font-size: 22px; color: var(--ink-soft); }
+  .bay .lead { font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 16px;
+    letter-spacing: 0.05em; text-transform: uppercase; margin-top: 6px; }
+  .bay .hint { font-size: 12px; color: var(--ink-soft); margin-top: 3px;
+    font-family: "JetBrains Mono", monospace; }
+
+  /* ---------- tab rail ---------- */
+  .rail {
+    width: 100%; max-width: 620px; margin: 0 auto;
+    display: flex; gap: 8px; padding: 6px;
+    background: var(--rail-face);
+    border: var(--seam); border-radius: 10px;
+  }
+  .rail .tab {
+    flex: 1; text-align: center; padding: 9px 0 8px;
+    font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);
+    background: linear-gradient(180deg, #ffffff, #f2f3f5);
+    border: var(--seam); border-radius: 6px; cursor: pointer;
+  }
+  .rail .tab:hover { color: var(--ink); }
+  .rail .tab.active {
+    background: var(--active-plate); color: var(--on-plate); border-color: #22262d;
+    box-shadow: inset 0 -2px 0 var(--rust);
+  }
+
+  /* ---------- models toolbar ---------- */
+  .models-bar {
+    display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+    width: 100%; max-width: 620px; margin: -8px auto 0;
+  }
+  .models-bar.show { display: flex; }
+  .models-bar label {
+    font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .models-bar select {
+    font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+    padding: 7px 10px; color: var(--ink);
+    background: #fbfcfd; border: var(--seam); border-radius: 6px;
+    min-width: 120px;
+  }
+
+  /* ---------- worksheet ---------- */
+  .sheet { border: var(--seam); border-radius: 10px; background: #fff; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(35,39,46,.06); }
+  .sheet .bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 12px 14px; border-bottom: var(--seam);
+  }
+  .bar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1; }
+  .bar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .search {
+    width: 280px; max-width: 100%;
+    font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+    padding: 8px 12px; color: var(--ink);
+    background: #fbfcfd; border: var(--seam); border-radius: 6px;
+    box-shadow: inset 0 1px 3px rgba(35,39,46,.07);
+  }
+  .rows { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--ink-soft); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    font-family: "Rajdhani", sans-serif; font-weight: 600; font-size: 12.5px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
+    text-align: left; padding: 10px 14px;
+    border-bottom: 1px solid var(--steel);
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.5) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #EEF0F2, #E2E5E9);
+  }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid #edeff2; }
+  tbody tr:hover { background: #f6f7f9; }
+  .mono { font-family: "JetBrains Mono", monospace; font-size: 12.5px; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; }
+  .chip i { width: 9px; height: 9px; display: inline-block; border: 1px solid rgba(35,39,46,.25); flex-shrink: 0; }
+  .c-orange { background: var(--status-orange); }
+  .c-yellow { background: var(--status-yellow); }
+  .c-lightgreen { background: var(--status-lightgreen); }
+  .c-green { background: var(--status-green); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .files-list { padding: 8px 0; }
+  .file-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 14px; border-bottom: 1px solid #edeff2;
+  }
+  .file-row:last-child { border-bottom: none; }
+  .file-name { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 600; }
+  .file-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    font-size: 11.5px; color: var(--ink-soft);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-family: "JetBrains Mono", monospace; }
+  .legend i { width: 10px; height: 10px; border: 1px solid rgba(35,39,46,.25); display: inline-block; }
+
+  footer {
+    border-top: var(--seam); padding-top: 14px;
+    font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--ink-soft);
+  }
+
+  @media (max-width: 900px) {
+    .plates { grid-template-columns: repeat(2, 1fr); }
+    .rail { max-width: none; }
+    .models-bar { max-width: none; }
+  }
+  @media (max-width: 560px) {
+    .plates { grid-template-columns: 1fr; }
+    header { flex-direction: column; align-items: stretch; }
+    .brand h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="eyebrow">UI demo</div>
+      <h1>Pending Parts <span>/</span> Dashboard</h1>
+      <p class="tagline">Track and manage pending parts.</p>
+      <p class="meta">Polished Bay — silver · shine · edgy · last updated 26 Jul 2026, 16:32</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="key">Backup</button>
+    </div>
+  </header>
+
+  <section class="plates">
+    <div class="plate">
+      <div class="tag">Total Pending</div>
+      <div class="num">176</div>
+      <div class="sub">pending rows</div>
+    </div>
+    <div class="plate">
+      <div class="tag">Total Qty</div>
+      <div class="num">351</div>
+      <div class="sub">sum of affected qty</div>
+    </div>
+    <div class="plate">
+      <div class="tag">Unique Parts</div>
+      <div class="num">123</div>
+      <div class="mini">
+        <button type="button" class="key" id="btn-unique-view">View</button>
+        <button type="button" class="key">Download</button>
+      </div>
+    </div>
+    <div class="plate">
+      <div class="tag">Files Uploaded</div>
+      <div class="num">3</div>
+      <div class="sub">active source files</div>
+    </div>
+  </section>
+
+  <div class="bay">
+    <div class="icon">⇪</div>
+    <div class="lead">Drop Excel files into the bay</div>
+    <div class="hint">.xlsx / .xls — multiple files supported</div>
+  </div>
+
+  <nav class="rail" role="tablist" aria-label="Dashboard views">
+    <button type="button" class="tab active" data-tab="pending" role="tab" aria-selected="true">Pending</button>
+    <button type="button" class="tab" data-tab="required" role="tab" aria-selected="false">Required</button>
+    <button type="button" class="tab" data-tab="models" role="tab" aria-selected="false">Models</button>
+    <button type="button" class="tab" data-tab="files" role="tab" aria-selected="false">Files Uploaded</button>
+  </nav>
+
+  <div class="models-bar" id="models-bar">
+    <label>
+      Model
+      <select aria-label="Select model">
+        <option>XKN</option>
+        <option>AKF</option>
+        <option>UNKNOWN</option>
+      </select>
+    </label>
+    <button type="button" class="key">Download XKN</button>
+  </div>
+
+  <!-- Pending -->
+  <section class="sheet panel active" data-panel="pending">
+    <div class="bar">
+      <div class="bar-left">
+        <input class="search" placeholder="Search by Part No.…" />
+      </div>
+      <span class="rows">176 ROWS</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Date</th><th>Batch</th><th>Part No.</th><th>Part Name</th><th>Qty</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td class="mono">21-Jul</td><td class="mono">XKN11A</td><td class="mono">5206110XKN11A</td><td>Bracket</td><td class="mono">176</td><td><span class="chip"><i class="c-orange"></i>Need to Order</span></td></tr>
+        <tr><td>2</td><td class="mono">01-Jan</td><td class="mono">AKC5113</td><td class="mono">5402149XKN01A8P</td><td>PANEL ASSY, LH FR DOOR</td><td class="mono">4</td><td><span class="chip"><i class="c-yellow"></i>Ordered</span></td></tr>
+        <tr><td>3</td><td class="mono">04-Feb</td><td class="mono">ALW6001</td><td class="mono">5206110XKN11A</td><td>WINDSHIELD SUB-ASSY, FR</td><td class="mono">7</td><td><span class="chip"><i class="c-lightgreen"></i>In Transit</span></td></tr>
+        <tr><td>4</td><td class="mono">11-Feb</td><td class="mono">AKA5021</td><td class="mono">6310100XKN01A</td><td>WINDOW WIPER ARM ASSY, RR</td><td class="mono">6</td><td><span class="chip"><i class="c-orange"></i>Need to Order</span></td></tr>
+        <tr><td>5</td><td class="mono">15-Feb</td><td class="mono">PHV4402</td><td class="mono">6301700XKN19A</td><td>TAIL GATE ASSY</td><td class="mono">2</td><td><span class="chip"><i class="c-yellow"></i>Ordered</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Required -->
+  <section class="sheet panel" data-panel="required">
+    <div class="bar">
+      <div class="bar-left">
+        <input class="search" placeholder="Search by Part No.…" />
+      </div>
+      <span class="rows">48 ROWS</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Model</th><th>Part No.</th><th>Part Name</th><th>Total Qty</th><th>Count in Pending</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td class="mono">XKN</td><td class="mono">5206110XKN11A</td><td>Bracket</td><td class="mono">352</td><td class="mono">2</td></tr>
+        <tr><td>2</td><td class="mono">AKC</td><td class="mono">5402149XKN01A8P</td><td>PANEL ASSY, LH FR DOOR</td><td class="mono">4</td><td class="mono">1</td></tr>
+        <tr><td>3</td><td class="mono">ALW</td><td class="mono">5206110XKN11A</td><td>WINDSHIELD SUB-ASSY, FR</td><td class="mono">7</td><td class="mono">1</td></tr>
+        <tr><td>4</td><td class="mono">—</td><td class="mono">6310100XKN01A</td><td>WINDOW WIPER ARM ASSY, RR</td><td class="mono">6</td><td class="mono">1</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Models -->
+  <section class="sheet panel" data-panel="models">
+    <div class="bar">
+      <div class="bar-left">
+        <input class="search" placeholder="Search by Part No.…" />
+      </div>
+      <div class="bar-right">
+        <button type="button" class="key primary">Download File B</button>
+        <button type="button" class="key">Download Pending</button>
+        <span class="rows">12 ROWS</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Model</th><th>Part No.</th><th>Part Name</th><th>Qty</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td class="mono">XKN</td><td class="mono">5206110XKN11A</td><td>Bracket</td><td class="mono">352</td></tr>
+        <tr><td>2</td><td class="mono">XKN</td><td class="mono">5402149XKN01A8P</td><td>PANEL ASSY, LH FR DOOR</td><td class="mono">4</td></tr>
+        <tr><td>3</td><td class="mono">UNKNOWN</td><td class="mono">6310100XKN01A</td><td>WINDOW WIPER ARM ASSY, RR</td><td class="mono">48</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Files -->
+  <section class="sheet panel" data-panel="files">
+    <div class="files-list">
+      <div class="file-row">
+        <div>
+          <div class="file-name">Pending_Parts_Jul.xlsx</div>
+          <div class="file-meta">Uploaded 26 Jul 2026 · 176 pending rows</div>
+        </div>
+        <button type="button" class="key">Remove</button>
+      </div>
+      <div class="file-row">
+        <div>
+          <div class="file-name">Week_29_Status.xls</div>
+          <div class="file-meta">Uploaded 21 Jul 2026 · 64 pending rows</div>
+        </div>
+        <button type="button" class="key">Remove</button>
+      </div>
+      <div class="file-row">
+        <div>
+          <div class="file-name">Plant_A_Batch.xlsx</div>
+          <div class="file-meta">Uploaded 18 Jul 2026 · 41 pending rows</div>
+        </div>
+        <button type="button" class="key">Remove</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Unique Parts dialog mock -->
+  <section class="sheet panel" data-panel="unique">
+    <div class="bar">
+      <div class="bar-left">
+        <span style="font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Unique Parts</span>
+        <input class="search" placeholder="Search by Part No.…" />
+      </div>
+      <div class="bar-right">
+        <button type="button" class="key" id="btn-unique-close">Close</button>
+        <span class="rows">123 PARTS</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Part No.</th><th>Part Name</th><th>Qty</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td class="mono">5206110XKN11A</td><td>Bracket</td><td class="mono">400</td></tr>
+        <tr><td>2</td><td class="mono">5402149XKN01A8P</td><td>PANEL ASSY, LH FR DOOR</td><td class="mono">4</td></tr>
+        <tr><td>3</td><td class="mono">6310100XKN01A</td><td>WINDOW WIPER ARM ASSY, RR</td><td class="mono">6</td></tr>
+        <tr><td>4</td><td class="mono">6301700XKN19A</td><td>TAIL GATE ASSY</td><td class="mono">2</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="legend" aria-label="Excel status fills">
+    <span><i class="c-orange"></i>--status-orange Need to Order</span>
+    <span><i class="c-yellow"></i>--status-yellow Ordered</span>
+    <span><i class="c-lightgreen"></i>--status-lightgreen In Transit</span>
+    <span><i class="c-green"></i>--status-green Resolved (excluded)</span>
+  </div>
+
+  <footer>
+    Pending Parts Dashboard · UI demo · tokens synced with preview/palette.html · rust = baseline only, never fill
+  </footer>
+
+</div>
+
+<script>
+  const tabs = document.querySelectorAll(".rail .tab");
+  const panels = document.querySelectorAll(".panel");
+  const modelsBar = document.getElementById("models-bar");
+
+  function showPanel(name) {
+    panels.forEach((p) => p.classList.toggle("active", p.dataset.panel === name));
+    tabs.forEach((t) => {
+      const on = t.dataset.tab === name;
+      t.classList.toggle("active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    modelsBar.classList.toggle("show", name === "models");
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => showPanel(tab.dataset.tab));
+  });
+
+  document.getElementById("btn-unique-view").addEventListener("click", () => {
+    showPanel("unique");
+    tabs.forEach((t) => {
+      t.classList.remove("active");
+      t.setAttribute("aria-selected", "false");
+    });
+    modelsBar.classList.remove("show");
+  });
+
+  document.getElementById("btn-unique-close").addEventListener("click", () => showPanel("pending"));
+</script>
+</body>
+</html>
