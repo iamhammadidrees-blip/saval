@@ -12,11 +12,19 @@ import {
   filterRequiredByModel,
   listRequiredModels,
 } from "@/lib/dataProcessor";
-import { downloadModelParts } from "@/lib/exportUtils";
+import {
+  downloadModelParts,
+  downloadPendingParts,
+  downloadRequiredPartsFileB,
+} from "@/lib/exportUtils";
 import { cn } from "@/lib/utils";
 
 export function ModelsView() {
-  const { requiredParts, isHydrated } = usePendingData();
+  const {
+    requiredParts,
+    pendingParts,
+    isHydrated,
+  } = usePendingData();
   const columns = useMemo(() => createModelColumns(), []);
   const models = useMemo(
     () => listRequiredModels(requiredParts),
@@ -45,7 +53,7 @@ export function ModelsView() {
     [requiredParts, selectedModel],
   );
 
-  const handleDownload = useCallback(async () => {
+  const handleDownloadModel = useCallback(async () => {
     if (!selectedModel || filteredParts.length === 0 || isExporting) {
       return;
     }
@@ -64,10 +72,71 @@ export function ModelsView() {
     }
   }, [filteredParts, isExporting, selectedModel]);
 
+  const handleDownloadFileB = useCallback(async () => {
+    if (requiredParts.length === 0 || isExporting) return;
+
+    setIsExporting(true);
+    try {
+      await downloadRequiredPartsFileB(requiredParts);
+      toast.success("File B downloaded");
+    } catch (error) {
+      toast.error("Could not download File B", {
+        description:
+          error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting, requiredParts]);
+
+  const handleDownloadPending = useCallback(async () => {
+    if (pendingParts.length === 0 || isExporting) return;
+
+    setIsExporting(true);
+    try {
+      await downloadPendingParts(pendingParts);
+      toast.success("Pending parts downloaded");
+    } catch (error) {
+      toast.error("Could not download pending export", {
+        description:
+          error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting, pendingParts]);
+
   const emptyMessage =
     requiredParts.length === 0
       ? "Upload File A to see models"
       : "No parts for this model";
+
+  const exportToolbar = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={
+          !isHydrated || requiredParts.length === 0 || isExporting
+        }
+        onClick={() => void handleDownloadFileB()}
+      >
+        <FileDown data-icon="inline-start" />
+        Download File B
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={
+          !isHydrated || pendingParts.length === 0 || isExporting
+        }
+        onClick={() => void handleDownloadPending()}
+      >
+        <FileDown data-icon="inline-start" />
+        Download Pending
+      </Button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -105,7 +174,7 @@ export function ModelsView() {
             filteredParts.length === 0 ||
             isExporting
           }
-          onClick={() => void handleDownload()}
+          onClick={() => void handleDownloadModel()}
         >
           <FileDown data-icon="inline-start" />
           {selectedModel
@@ -120,6 +189,7 @@ export function ModelsView() {
         emptyMessage={emptyMessage}
         searchPlaceholder="Search by Part No.…"
         pageStickyHeader
+        toolbarActions={exportToolbar}
       />
     </div>
   );

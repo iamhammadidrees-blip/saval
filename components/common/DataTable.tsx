@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -36,6 +36,8 @@ interface DataTableProps<TData> {
   stickyHeader?: boolean;
   /** Keep headers fixed at the top of the page while the document scrolls. */
   pageStickyHeader?: boolean;
+  /** Extra controls on the search bar row (left of the search input). */
+  toolbarActions?: ReactNode;
 }
 
 function SortIcon({
@@ -67,6 +69,7 @@ export function DataTable<TData>({
   tableClassName,
   stickyHeader = false,
   pageStickyHeader = false,
+  toolbarActions,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -99,7 +102,8 @@ export function DataTable<TData>({
 
   return (
     <div className={cn("flex min-h-0 flex-col gap-3", className)}>
-      <div className="relative flex shrink-0 items-center justify-center gap-3">
+      <div className="relative flex shrink-0 flex-wrap items-center justify-center gap-3">
+        {toolbarActions}
         <Input
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
