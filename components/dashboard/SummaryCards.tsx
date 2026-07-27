@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { UniquePartsCard } from "@/components/dashboard/UniquePartsCard";
+import {
+  aggregateRequired,
+  aggregateUniqueParts,
+} from "@/lib/dataProcessor";
 import {
   Card,
   CardContent,

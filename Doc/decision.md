@@ -23,33 +23,29 @@ For each Excel data row the parser reads **that** cell only:
 
 ```text
 2nd status column cell
-  → text  (e.g. "Need to Order")   → PendingPart.status
-  → fill  (ARGB)                   → PendingPart.color
+  → text  (e.g. "Need to Order", "Resolved")   → PendingPart.status
+  → fill  (ARGB)                               → PendingPart.color  (stored for display/export; not used for keep/drop)
 ```
 
-1st status column is ignored for pending / color decisions.
+1st status column is ignored for pending decisions.
 
 ---
 
-### 2. How fill color decides pending vs not
+### 2. How pending vs not is decided (FINAL — text only)
 
-Color is mapped first (exact client hexes in `PENDING_COLORS` / `RESOLVED_COLORS`):
+**Applied approach (current):** keep/drop uses **Status 2 text only**. Fill color is still extracted and stored, but **does not** decide pending.
 
-| 2nd-status fill | Mapped as | Decision |
-|-----------------|-----------|----------|
-| `#FFC000` | orange | Pending |
-| `#FFFF00` | yellow | Pending |
-| `#A9D08E` | lightgreen | Pending |
-| `#92D050` | green | Not pending |
-| No / unknown fill | none | Fall back to keywords |
+| Status 2 text (normalized, case-insensitive) | Decision |
+|----------------------------------------------|----------|
+| Contains `"resolve"` (e.g. resolve, resolved, Resolution…) | **Drop** (not pending) |
+| Anything else (including empty / unknown) | **Keep** (pending) |
 
-**`isPendingRow()` order:**
+```ts
+// lib/dataProcessor.ts — isPendingRow()
+return !normalizeText(row.status).includes("resolve");
+```
 
-1. Color pending (orange / yellow / lightgreen) → keep  
-2. Color green → drop  
-3. Else keywords: `"need to order"`, `"under observation"`, … → keep  
-4. Else keywords: `"issued from inventory"`, `/^pk[- ]?\d+/i` → drop  
-5. Else → drop (not pending)
+**Changed from earlier approach:** color-first (`#FFC000` / `#FFFF00` / `#A9D08E` pending, `#92D050` resolved) + keyword lists (`PENDING_KEYWORDS` / `RESOLVED_KEYWORDS`) are **no longer used for filtering**. Color hex helpers remain in `parserConfig.ts` for reference / future UI, and the parser still writes `PendingPart.color`.
 
 Only pending rows are written to IndexedDB.
 
@@ -64,10 +60,10 @@ parseFileA()
   - find ≥2 status columns
   - decision = 2nd left-to-right
   - for each row: read that cell’s text + fill
-  - return ALL raw rows (pending + resolved)
+  - return ALL raw rows
   ↓
-filterPending()
-  - keep only pending by color/keywords
+filterPending() / isPendingRow()
+  - drop if status text includes "resolve"; else keep
   ↓
 toPendingParts()
   - id, fileName, quantity, status, color, …
@@ -81,15 +77,17 @@ upsertFile()  (Zustand + IndexedDB)
 Dashboard
   - Pending table ← pendingParts
   - Required table ← aggregateRequired(pendingParts)  [NOT stored]
+  - Models tab ← filter Required by model
+  - Unique Parts ← aggregateUniqueParts(pendingParts) [NOT stored]
 ```
 
 **Stored in IndexedDB:** `uploadedFiles`, `pendingParts` (pending rows only, with status + color from the **2nd** status column).
 
-**Not stored:** full workbook, resolved/green rows, Required aggregates.
+**Not stored:** full workbook, resolved rows, Required / Unique aggregates.
 
 **On refresh:** hydrate() → IndexedDB → Zustand → tables (no re-parse until re-upload).
 
-**Bottom line:** 2nd status column fill/text decides pending; only pending rows hit IndexedDB; Required is computed from that list.
+**Bottom line:** 2nd status column supplies text + fill; **text containing “resolve” drops the row**; everything else is pending and hits IndexedDB; Required / Models / Unique are computed from that list.
 
 ---
 
@@ -105,4 +103,4 @@ Group key = normalize(partNumber || partName) + "|" + normalize(model)
 - Same Part No + different models → separate Required rows
 - `RequiredPart.model` is a single model string (not a joined list)
 - Unique Parts card/view = **Part No. only** (`aggregateUniqueParts`); rows without Part No are skipped
-- Models tab / export label empty model as **`UNKNOWN`** via `requiredModelLabel()`
+- Models tab / Required / exports label empty model as **`UNKNOWN`** via `requiredModelLabel()` (tables and Excel — not `—`)

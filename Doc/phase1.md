@@ -6,7 +6,7 @@ Building inside the existing saval repo: fresh Next.js 16.2 + React 19 + Tailwin
 
 ## File A format (confirmed)
 
-Non-Conformance Record sheet. Title row on top; find header row by "Part No." / "Part Name". FINAL (as coded): the **2nd status column left-to-right** decides pending (not Status-2-by-name, not right-most). Orange/yellow/light-green = pending; green / PK-ref = resolved. Quantity = Affected Qty. Ignore embedded photos. See `Doc/decision.md`.
+Non-Conformance Record sheet. Title row on top; find header row by "Part No." / "Part Name". FINAL (as coded): the **2nd status column left-to-right** supplies status text + fill. **Pending keep/drop = text only** — drop if status includes `"resolve"`; else keep. Color is stored but not used for filtering. Quantity = Affected Qty. Ignore embedded photos. See `Doc/decision.md` and `Doc/applied-changes.md`.
 
 ## Stack
 

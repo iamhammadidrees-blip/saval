@@ -35,7 +35,7 @@ Confirmed parsing rules:
 
 
 
-Pending rule: a row is pending when the **2nd status column** fill is orange/yellow/light-green (or keyword fallback) — e.g. "Under Observation", "Need to Order". Green (#92D050) or PK-xxxx / "Issued from Inventory" mean resolved and are excluded. Detection uses fill color first, keyword list as fallback (both in constants/parserConfig.ts). See Doc/decision.md.
+Pending rule (FINAL as coded): the **2nd status column** supplies text + fill. **Keep/drop uses text only** — if status contains `"resolve"` (any case) → drop; else keep. Fill color is stored on the row but is **not** used for filtering. Quantity = Affected Qty. See Doc/decision.md and Doc/applied-changes.md.
 
 
 
@@ -81,11 +81,11 @@ RequiredPart[] is never stored — computed via a memoized selector grouping by 
 
 
 
-Data models in `lib/types.ts` (FINAL as coded): `UploadedFile`, `PendingPart` (includes `status` + `color` from the **2nd status column**), `RequiredPart` (includes `model`), `UniquePart`, `BackupSnapshot`. See `Doc/decision.md`.
+Data models in `lib/types.ts` (FINAL as coded): `UploadedFile`, `PendingPart` (includes `status` + `color` from the **2nd status column**), `RequiredPart` (includes `model`), `UniquePart`, `BackupSnapshot`. Pending filter = Status text includes `"resolve"` → drop. See `Doc/decision.md` / `Doc/applied-changes.md`.
 
 Folder structure
 
-Per PLAN 3.1, adapted to this repo (paths relative to repo root): app/page.tsx (dashboard), components/{dashboard,upload,common,ui}/, lib/{types,excelParser,dataProcessor,indexedDB,exportUtils}.ts, store/useAppStore.ts, hooks/{useFileUpload,usePendingData}.ts, constants/{tableColumns,parserConfig}.ts. The extra constants/parserConfig.ts holds header aliases, pending keywords, and color hex mappings so sample-file calibration touches one file.
+Per PLAN 3.1, adapted to this repo (paths relative to repo root): app/page.tsx (dashboard), components/{dashboard,upload,common,ui}/, lib/{types,excelParser,dataProcessor,indexedDB,exportUtils}.ts, store/useAppStore.ts, hooks/{useFileUpload,usePendingData}.ts, constants/{tableColumns,parserConfig}.ts. `parserConfig.ts` holds header aliases, status column rule, and color hex helpers (color no longer drives keep/drop).
 
 _______________________________________________________________________________________________________
 

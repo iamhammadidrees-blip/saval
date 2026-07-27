@@ -4,14 +4,16 @@
 **Depends on:** Phase 1 complete (types, IndexedDB, Zustand hydrate, dashboard shell, FileDropzone stub)  
 **Out of scope:** Backup/Restore UI polish, UploadedFilesList delete UX, Vercel deploy (Phase 3)
 
+> **APPLIED UPDATE (current code):** Pending keep/drop is **Status 2 text only** — drop if text includes `"resolve"`; else keep. Color is still parsed/stored but **not** used for filtering. Keyword lists below are historical Phase 2 design; see `Doc/decision.md` + `Doc/applied-changes.md`.
+
 ---
 
 ## Goal
 
 Turn the Phase 1 shell into a working product core:
 
-1. Parse File A Excel (color-aware, **2nd status column** left-to-right)
-2. Filter pending rows only
+1. Parse File A Excel (**2nd status column** left-to-right — text + fill)
+2. Filter pending rows only (text: `"resolve"` → drop)
 3. Smart replace when same filename is re-uploaded
 4. Aggregate Required Parts on-the-fly
 5. Real Pending + Required tables
@@ -25,8 +27,8 @@ Turn the Phase 1 shell into a working product core:
 
 ```
 FileDropzone
-  → excelParser (ExcelJS: headers, 2nd status column, color/keyword)
-  → dataProcessor (filter pending + map to PendingPart[])
+  → excelParser (ExcelJS: headers, 2nd status column, text + color)
+  → dataProcessor (filter pending by "resolve" text + map to PendingPart[])
   → upsertFile (deleteByFileName if exists → put new parts + file meta)
   → IndexedDB + Zustand
   → aggregateRequired (computed)
@@ -44,20 +46,19 @@ Define:
 
 | Config key | Purpose |
 |---|---|
-| `HEADER_ALIASES` | Map flexible header text → field keys (`partNumber`, `partName`, `batch`, `date`, `quantity`, `remarks`, `handlingMethod`) |
+| `HEADER_ALIASES` | Map flexible header text → field keys (`partNumber`, `partName`, `batch`, `date`, `quantity`, …) |
 | `HEADER_MARKERS` | Strings that identify the real header row (e.g. `"Part No."`, `"Part Name"`) |
 | `STATUS_HEADER_HINTS` | Detect status columns (`Status`, `Status-1`/`2`/`3`, dated under Status group — not Remarks) |
 | `STATUS_COLUMN_RULE` | FINAL: `expectedCount: 2`, `decisionColumnIndex: 1` → **always 2nd status column** (not by name, not right-most) |
-| `PENDING_COLORS` | Exact ARGB fills that mean pending (orange / yellow / light green) |
-| `RESOLVED_COLORS` | Exact ARGB fill that means resolved (green `#92D050`) |
-| `PENDING_KEYWORDS` | Fallback if color missing: `"under observation"`, `"need to order"`, `"need to order sub-assy part"` |
-| `RESOLVED_KEYWORDS` | Fallback: `"issued from inventory"`, `/^pk[- ]?\d+/i` |
+| `PENDING_COLORS` / `RESOLVED_COLORS` | Exact ARGB fills (still mapped into `PendingPart.color`; **not** used for keep/drop in current code) |
 | `QUANTITY_FIELD` | Always `Affected Qty` (alias list) |
+
+**Historical (not used for filter now):** keyword lists for pending/resolved — superseded by `"resolve"` substring rule in `isPendingRow()`.
 
 Also add small helpers here or in utils:
 
 - `normalizeHeader(text)` — trim, lowercase, collapse spaces
-- `isOrangeLike(argb)` / `isGreenLike(argb)` — fuzzy match (Excel orange varies)
+- `isOrangeLike(argb)` / `isGreenLike(argb)` — exact client hex match
 
 **Done when:** config exports are typed and importable; no ExcelIO yet.
 
