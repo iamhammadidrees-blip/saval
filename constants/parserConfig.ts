@@ -5,8 +5,6 @@ export type ParserFieldKey =
   | "date"
   | "quantity";
 
-export type StatusKeyword = string | RegExp;
-
 /**
  * Normalized File A header aliases.
  * Add new aliases here when a supplier changes its column wording.
@@ -85,18 +83,6 @@ export const PENDING_COLORS = {
 /** The client's resolved status fill: RGB #92D050. */
 export const RESOLVED_COLORS = ["FF92D050"] as const;
 
-export const PENDING_KEYWORDS: readonly StatusKeyword[] = [
-  "under observation",
-  "need to order",
-  "need to order sub-assy part",
-  "need to order sub assy part",
-];
-
-export const RESOLVED_KEYWORDS: readonly StatusKeyword[] = [
-  "issued from inventory",
-  /^pk[- ]?\d+/i,
-];
-
 export function normalizeHeader(text: unknown): string {
   return String(text ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -136,12 +122,4 @@ export function isGreenLike(argb: string | undefined): boolean {
 
 export function isLightGreenLike(argb: string | undefined): boolean {
   return matchesExactColor(argb, PENDING_COLORS.lightGreen);
-}
-
-export function isPendingColor(argb: string | undefined): boolean {
-  return (
-    isOrangeLike(argb) ||
-    isYellowLike(argb) ||
-    isLightGreenLike(argb)
-  );
 }
