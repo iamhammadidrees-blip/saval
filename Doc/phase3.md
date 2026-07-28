@@ -40,14 +40,14 @@ Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 | Sticky table headers (page scroll) | Pending / Required / Models `pageStickyHeader` |
 | Unique dialog scroll + sticky header | `stickyHeader` + max-height scroll |
 | Industrial tab rail + dropzone silver splash | `DashboardTabs.tsx`, `FileDropzone.tsx` |
-| Header last-updated + disabled Backup | `Dashboard.tsx` |
-| IDB `exportSnapshot` / `importSnapshot` | `lib/indexedDB.ts` (API present; Backup UI not wired) |
+| Header last-updated + **Backup wired** | `Dashboard.tsx` |
+| IDB `exportSnapshot` / `importSnapshot` | `lib/indexedDB.ts` (export used by Backup; import still unused) |
 
 ### Still open (this Phase 3 roadmap)
 
 | Gap | Notes |
 |---|---|
-| Backup button | Present in header but **disabled** — needs wiring to `exportSnapshot` |
+| Backup button | **Wired** — downloads `pending-parts-backup_YYYY-MM-DD.json` via `exportSnapshot()` |
 | Restore | No UI yet (IDB `importSnapshot` exists) |
 | Clear All | Store action exists — no header UI / confirm |
 | Confirm dialogs | File delete still uses `window.confirm`; prefer shadcn Dialog |
@@ -74,7 +74,7 @@ Client can open the **live Vercel URL** and:
 
 ```
 Dashboard header
-  ├── Backup  → exportSnapshot() → JSON download     [WIRE]
+  ├── Backup  → exportSnapshot() → JSON download     [DONE]
   ├── Restore → file picker → importSnapshot()       [NEW UI]
   └── Clear All → Dialog confirm → clearAll()        [NEW UI]
 
@@ -86,16 +86,15 @@ Then: responsive pass → pnpm build → Vercel → USER_GUIDE
 
 ---
 
-## Step 3.1 — Wire Backup (download JSON)
+## Step 3.1 — Wire Backup (download JSON) ✅ DONE
 
-**Already exists:** `exportSnapshot()` in `lib/indexedDB.ts`, disabled Backup button in `Dashboard.tsx`.
+**Already exists:** `exportSnapshot()` in `lib/indexedDB.ts`.
 
-1. Enable Backup button when `isHydrated`
-2. On click:
-   - `const snapshot = await exportSnapshot()`
-   - Download `pending-parts-backup_YYYY-MM-DD.json`
+**Applied:**
+1. Backup enabled when `isHydrated` (disabled while export runs)
+2. On click → `exportSnapshot()` → download `pending-parts-backup_YYYY-MM-DD.json`
 3. Toast: `"Backup saved (N pending rows, M files)"`
-4. Handle errors with toast (never crash)
+4. Errors toast only — never crash
 
 **Done when:** clicking Backup downloads valid JSON that matches current IndexedDB data.
 
