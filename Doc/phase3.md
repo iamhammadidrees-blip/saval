@@ -49,7 +49,7 @@ Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 |---|---|
 | Backup button | **Wired** — downloads `pending-parts-backup_YYYY-MM-DD.json` via `exportSnapshot()` |
 | Restore | **Wired** — JSON file → confirm → `importSnapshot` + store refresh |
-| Clear All | Store action exists — no header UI / confirm |
+| Clear All | **Wired** — header confirm → `clearAll()` |
 | Confirm dialogs | File delete still uses `window.confirm`; prefer shadcn Dialog |
 | Hydrate loading | Header shows “Loading…” only — optional fuller skeleton |
 | Responsive polish | Summary cards are `grid-cols-4` — tighten mobile |
@@ -76,7 +76,7 @@ Client can open the **live Vercel URL** and:
 Dashboard header
   ├── Backup  → exportSnapshot() → JSON download     [DONE]
   ├── Restore → file picker → importSnapshot()       [NEW UI]
-  └── Clear All → Dialog confirm → clearAll()        [NEW UI]
+  └── Clear All → confirm → clearAll()               [DONE]
 
 Files Uploaded tab
   └── Delete → shadcn Dialog (replace window.confirm) [POLISH]
@@ -113,14 +113,15 @@ Then: responsive pass → pnpm build → Vercel → USER_GUIDE
 
 ---
 
-## Step 3.3 — Clear All (with confirm)
+## Step 3.3 — Clear All (with confirm) ✅ DONE
 
 **Already exists:** `clearAll()` in Zustand + IndexedDB.
 
-1. Add destructive **Clear All** button in header (or under Files tab)
-2. Confirm: `"Delete all uploaded files and pending parts? This cannot be undone. Use Backup first."`
+**Applied:**
+1. Destructive **Clear All** button in header
+2. In-app Dialog confirm (not `window.confirm`): `"Delete all uploaded files and pending parts? This cannot be undone. Use Backup first."`
 3. On confirm → `clearAll()` → empty UI
-4. Toast: `"All data cleared"`
+4. Toast: `"All data cleared"` (Toaster fixed — no `next-themes` ThemeProvider required)
 
 **Done when:** Clear All empties IDB; refresh stays empty.
 

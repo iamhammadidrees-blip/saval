@@ -1,13 +1,21 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { DatabaseBackup, Upload } from "lucide-react";
+import { DatabaseBackup, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { FileDropzone } from "@/components/upload/FileDropzone";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { usePendingData } from "@/hooks/usePendingData";
 import { exportSnapshot } from "@/lib/indexedDB";
 import type { BackupSnapshot } from "@/lib/types";
@@ -46,9 +54,12 @@ function parseBackupSnapshot(raw: unknown): BackupSnapshot {
 }
 
 export function Dashboard() {
-  const { lastUpdated, isHydrated, restoreFromSnapshot } = usePendingData();
+  const { lastUpdated, isHydrated, restoreFromSnapshot, clearAll } =
+    usePendingData();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const restoreInputRef = useRef<HTMLInputElement>(null);
 
   const lastUpdatedText = !isHydrated
@@ -57,7 +68,7 @@ export function Dashboard() {
       ? `Last updated ${new Date(lastUpdated).toLocaleString()}`
       : "No data yet";
 
-  const busy = isBackingUp || isRestoring;
+  const busy = isBackingUp || isRestoring || isClearing;
 
   const handleBackup = useCallback(async () => {
     if (!isHydrated || busy) return;
@@ -115,6 +126,29 @@ export function Dashboard() {
     [busy, restoreFromSnapshot],
   );
 
+  const handleClearAllClick = useCallback(() => {
+    if (!isHydrated || busy) return;
+    setClearDialogOpen(true);
+  }, [busy, isHydrated]);
+
+  const handleClearAllConfirm = useCallback(async () => {
+    if (!isHydrated || busy) return;
+
+    setIsClearing(true);
+    try {
+      await clearAll();
+      setClearDialogOpen(false);
+      toast.success("All data cleared");
+    } catch (error) {
+      toast.error("Could not clear data", {
+        description:
+          error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  }, [busy, clearAll, isHydrated]);
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-8 py-8">
       <header className="flex items-center justify-between gap-4 border-b pb-5">
@@ -141,6 +175,14 @@ export function Dashboard() {
             <Upload data-icon="inline-start" />
             Restore
           </Button>
+          <Button
+            variant="destructive"
+            disabled={!isHydrated || busy}
+            onClick={handleClearAllClick}
+          >
+            <Trash2 data-icon="inline-start" />
+            Clear All
+          </Button>
           <input
             ref={restoreInputRef}
             type="file"
@@ -152,6 +194,40 @@ export function Dashboard() {
           />
         </div>
       </header>
+
+      <Dialog
+        open={clearDialogOpen}
+        onOpenChange={(open) => {
+          if (isClearing) return;
+          setClearDialogOpen(open);
+        }}
+      >
+        <DialogContent showCloseButton={!isClearing} className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear all data?</DialogTitle>
+            <DialogDescription>
+              Delete all uploaded files and pending parts? This cannot be
+              undone. Use Backup first.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={isClearing}
+              onClick={() => setClearDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isClearing}
+              onClick={() => void handleClearAllConfirm()}
+            >
+              {isClearing ? "Clearing…" : "Clear All"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <SummaryCards />
       <FileDropzone />
