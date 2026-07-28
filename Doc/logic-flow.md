@@ -54,7 +54,7 @@ Download Pending Excel is available from the **Models** tab toolbar (with File B
 
 ## 2. Required table
 
-What it does: takes pending parts only and groups by **Part No (or Part Name) + Model**.
+What it does: takes pending parts only and groups by **Part No. + Model**.
 
 ```text
 pendingParts
@@ -69,12 +69,12 @@ Not stored in IndexedDB — recomputed whenever `pendingParts` changes.
 
 | Rule | Behavior |
 |------|----------|
-| Group key | `normalize(partNumber \|\| partName) + "\|" + normalize(model)` |
+| Group key | `normalize(partNumber) + "\|" + normalize(model)` |
 | Model | `extractModelFromBatch(batch)` — first 3 letters (e.g. ALW6001 → ALW) |
 | Empty model | shared `""` bucket for that part; display / export as **`UNKNOWN`** |
 | Same part + same model | **1 row**; sum qty; `countInPending++` |
 | Same part + different models | **separate rows** |
-| Skipped | no Part No and no Part Name |
+| Skipped | no Part No. |
 | Qty | sum of pending `quantity` in the group |
 
 ---

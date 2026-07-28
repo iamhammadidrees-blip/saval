@@ -56,16 +56,15 @@ interface RequiredAccumulator {
 }
 
 /**
- * Part identity for Required grouping / Unique Parts card
- * (Part No, else Part Name). Model is applied separately.
+ * Part identity for Required grouping (Part No. only). Model is applied separately.
  */
 export function requiredPartKey(part: PendingPart): string {
-  return normalizeText(part.partNumber) || normalizeText(part.partName);
+  return normalizeText(part.partNumber);
 }
 
 /**
  * Computes the Required view from pending parts.
- * Group = Part No (or Name) + Model from batch.
+ * Group = Part No. + Model from batch.
  * Same part + same model → one row (sum qty).
  * Same part + different models → separate rows.
  * Empty model → shared "" bucket for that part.
