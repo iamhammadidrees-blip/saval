@@ -14,10 +14,10 @@ import { cn } from "@/lib/utils";
 const panelKeyClass = cn(
   "flex-1 rounded-md border border-[#c5c9d0] bg-linear-to-b from-white to-[#f2f3f5]",
   "text-xs font-medium uppercase tracking-[0.08em] text-[#5c6370]",
-  "hover:from-white hover:to-white hover:text-[#2b3038]",
-  "data-active:border-[#22262d]! data-active:from-[#3a404a] data-active:to-[#2b3038]",
-  "data-active:text-[#f4f5f7]!",
-  "data-active:shadow-[inset_0_-2px_0_0_#c45c26]!",
+  "hover:from-white hover:to-[#f2f3f5] hover:text-[#5c6370] dark:hover:text-[#5c6370]",
+  "data-active:border-[#22262d]! data-active:from-[#3a404a]! data-active:to-[#2b3038]!",
+  "data-active:bg-linear-to-b! data-active:text-[#f4f5f7]! data-active:shadow-[inset_0_-2px_0_0_#c45c26]!",
+  "data-active:hover:from-[#3a404a]! data-active:hover:to-[#2b3038]! data-active:hover:text-[#f4f5f7]!",
 );
 
 export function DashboardTabs() {

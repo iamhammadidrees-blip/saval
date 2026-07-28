@@ -36,7 +36,7 @@ interface DataTableProps<TData> {
   stickyHeader?: boolean;
   /** Keep headers fixed at the top of the page while the document scrolls. */
   pageStickyHeader?: boolean;
-  /** Extra controls on the search bar row (left of the search input). */
+  /** Extra controls on the search bar row (right of the search input). */
   toolbarActions?: ReactNode;
 }
 
@@ -109,7 +109,9 @@ export function DataTable<TData>({
   return (
     <div className={cn("flex min-h-0 flex-col gap-3", className)}>
       <div className="relative flex shrink-0 flex-wrap items-center justify-center gap-3">
-        {toolbarActions}
+        <p className="absolute left-0 text-xs text-muted-foreground tabular-nums">
+          {rows.length.toLocaleString()} row{rows.length === 1 ? "" : "s"}
+        </p>
         <Input
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
@@ -117,9 +119,11 @@ export function DataTable<TData>({
           className="max-w-sm"
           aria-label="Search table"
         />
-        <p className="absolute right-0 text-xs text-muted-foreground tabular-nums">
-          {rows.length.toLocaleString()} row{rows.length === 1 ? "" : "s"}
-        </p>
+        {toolbarActions ? (
+          <div className="absolute right-0 flex flex-wrap items-center gap-2">
+            {toolbarActions}
+          </div>
+        ) : null}
       </div>
 
       {data.length === 0 ? (
