@@ -40,6 +40,12 @@ interface DataTableProps<TData> {
   toolbarActions?: ReactNode;
 }
 
+function columnClassName<TData>(
+  columnDef: ColumnDef<TData, unknown>,
+): string | undefined {
+  return (columnDef.meta as { className?: string } | undefined)?.className;
+}
+
 function SortIcon({
   sorted,
 }: {
@@ -152,7 +158,10 @@ export function DataTable<TData>({
                     return (
                       <TableHead
                         key={header.id}
-                        className={headerStuck ? "bg-card" : undefined}
+                        className={cn(
+                          headerStuck && "bg-card",
+                          columnClassName(header.column.columnDef),
+                        )}
                       >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
@@ -186,7 +195,10 @@ export function DataTable<TData>({
                 rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={columnClassName(cell.column.columnDef)}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),

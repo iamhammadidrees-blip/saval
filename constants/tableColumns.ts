@@ -107,6 +107,7 @@ export function createModelColumns(): ColumnDef<RequiredPart>[] {
       id: "model",
       accessorFn: (row) => requiredModelLabel(row.model),
       header: "Model",
+      meta: { className: "pl-20" },
       cell: ({ row }) => requiredModelLabel(row.original.model),
     },
     {
@@ -122,6 +123,7 @@ export function createModelColumns(): ColumnDef<RequiredPart>[] {
     {
       accessorKey: "totalQuantity",
       header: "Qty",
+      meta: { className: "pr-30" },
       cell: ({ row }) => row.original.totalQuantity.toLocaleString(),
     },
   ];
