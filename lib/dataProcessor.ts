@@ -8,6 +8,10 @@ function normalizeText(value: string | undefined): string {
   return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+export function isMissingPartNumber(part: { partNumber?: string }): boolean {
+  return normalizeText(part.partNumber) === "";
+}
+
 /**
  * Pending vs resolved from Status 2 text only.
  * Includes "resolve" (any case: resolve/resolved/…) → drop; everything else → keep.
@@ -76,9 +80,9 @@ export function aggregateRequired(
   const groups = new Map<string, RequiredAccumulator>();
 
   for (const part of parts) {
-    const partKey = requiredPartKey(part);
-    if (!partKey) continue;
+    if (isMissingPartNumber(part)) continue;
 
+    const partKey = requiredPartKey(part);
     const model = extractModelFromBatch(part.batch);
     const modelKey = normalizeText(model);
     const groupKey = `${partKey}|${modelKey}`;
@@ -136,9 +140,9 @@ export function aggregateUniqueParts(parts: PendingPart[]): UniquePart[] {
   const groups = new Map<string, UniqueAccumulator>();
 
   for (const part of parts) {
-    const partNumberKey = normalizeText(part.partNumber);
-    if (!partNumberKey) continue;
+    if (isMissingPartNumber(part)) continue;
 
+    const partNumberKey = normalizeText(part.partNumber);
     const existing = groups.get(partNumberKey);
     const qty = Number.isFinite(part.quantity) ? part.quantity : 0;
 

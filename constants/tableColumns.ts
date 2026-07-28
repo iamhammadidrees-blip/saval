@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { PendingPart, RequiredPart, UniquePart } from "@/lib/types";
-import { requiredModelLabel } from "@/lib/dataProcessor";
+import { isMissingPartNumber, requiredModelLabel } from "@/lib/dataProcessor";
 import { toShortDate } from "@/lib/utils";
 
 const EMPTY_CELL = "—";
@@ -15,8 +15,10 @@ function displayText(value: string | undefined): string {
 }
 
 function pendingPartNumberCell(partNumber: string | undefined): string {
-  const trimmed = partNumber?.trim() ?? "";
-  return trimmed || MISSING_PART_NO;
+  if (isMissingPartNumber({ partNumber })) {
+    return MISSING_PART_NO;
+  }
+  return partNumber!.trim();
 }
 
 const indexColumn = <T,>(): ColumnDef<T> => ({

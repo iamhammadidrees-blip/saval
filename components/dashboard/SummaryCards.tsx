@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import { UndefinedRowsCard } from "@/components/dashboard/UndefinedRowsCard";
 import { UniquePartsCard } from "@/components/dashboard/UniquePartsCard";
 import {
   Card,
@@ -16,30 +17,15 @@ export function SummaryCards() {
   const pendingParts = useAppStore((state) => state.pendingParts);
   const files = useAppStore((state) => state.files);
 
-  const { totalPending, totalQuantity } = useMemo(
-    () => ({
-      totalPending: pendingParts.length,
-      totalQuantity: pendingParts.reduce(
-        (sum, part) => sum + part.quantity,
-        0,
-      ),
-    }),
+  const totalQuantity = useMemo(
+    () =>
+      pendingParts.reduce((sum, part) => sum + part.quantity, 0),
     [pendingParts],
   );
 
   return (
     <div className="grid grid-cols-4 gap-4">
-      <Card size="sm">
-        <CardHeader>
-          <CardDescription>Total Pending</CardDescription>
-          <CardTitle className="text-3xl font-semibold tabular-nums">
-            {totalPending.toLocaleString()}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-xs text-muted-foreground">
-          Pending rows
-        </CardContent>
-      </Card>
+      <UndefinedRowsCard pendingParts={pendingParts} />
 
       <Card size="sm">
         <CardHeader>
