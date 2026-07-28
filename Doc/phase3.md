@@ -48,7 +48,7 @@ Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 | Gap | Notes |
 |---|---|
 | Backup button | **Wired** — downloads `pending-parts-backup_YYYY-MM-DD.json` via `exportSnapshot()` |
-| Restore | No UI yet (IDB `importSnapshot` exists) |
+| Restore | **Wired** — JSON file → confirm → `importSnapshot` + store refresh |
 | Clear All | Store action exists — no header UI / confirm |
 | Confirm dialogs | File delete still uses `window.confirm`; prefer shadcn Dialog |
 | Hydrate loading | Header shows “Loading…” only — optional fuller skeleton |
@@ -100,13 +100,14 @@ Then: responsive pass → pnpm build → Vercel → USER_GUIDE
 
 ---
 
-## Step 3.2 — Restore (import JSON)
+## Step 3.2 — Restore (import JSON) ✅ DONE
 
-1. Add **Restore** button + hidden `<input accept=".json,application/json">`
-2. Parse + validate (`version === 1`, arrays present)
-3. Confirm dialog: `"This will replace all current data. Continue?"`
-4. `importSnapshot(snapshot)` then refresh store
-5. Update `lastUpdated`; toast success / reject invalid files
+**Applied:**
+1. **Restore** button + hidden `<input accept=".json,application/json">`
+2. Parse + validate (`version === 1`, `files` + `pendingParts` arrays)
+3. Confirm: `"This will replace all current data. Continue?"`
+4. `importSnapshot(snapshot)` via store `restoreFromSnapshot` → refreshes Zustand
+5. Updates `lastUpdated`; toast success / reject invalid files
 
 **Done when:** Restore after Clear restores files + pending rows exactly.
 

@@ -7,10 +7,11 @@ import {
   deleteByFileName,
   getAllFiles,
   getAllPendingParts,
+  importSnapshot,
   putFile,
   putPendingParts,
 } from "@/lib/indexedDB";
-import type { PendingPart, UploadedFile } from "@/lib/types";
+import type { BackupSnapshot, PendingPart, UploadedFile } from "@/lib/types";
 import { toShortDate } from "@/lib/utils";
 
 interface AppState {
@@ -23,6 +24,7 @@ interface AppState {
   upsertFile: (file: UploadedFile, parts: PendingPart[]) => Promise<void>;
   removeFile: (fileName: string) => Promise<void>;
   clearAll: () => Promise<void>;
+  restoreFromSnapshot: (snapshot: BackupSnapshot) => Promise<void>;
 }
 
 const initialState = {
@@ -106,6 +108,21 @@ export const useAppStore = create<AppState>()((set, get) => ({
       pendingParts: [],
       isLoading: false,
       lastUpdated: null,
+    });
+  },
+
+  restoreFromSnapshot: async (snapshot) => {
+    await importSnapshot(snapshot);
+
+    set({
+      files: snapshot.files,
+      pendingParts: snapshot.pendingParts.map((part) => ({
+        ...part,
+        date: toShortDate(part.date),
+      })),
+      isLoading: false,
+      isHydrated: true,
+      lastUpdated: new Date().toISOString(),
     });
   },
 }));
