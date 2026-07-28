@@ -15,13 +15,6 @@ const PENDING_HEADERS = [
 
 const PENDING_SHEET_NAME = "Pending Parts";
 
-const STATUS_FILL_ARGB: Record<string, string> = {
-  orange: "FFFFC000",
-  yellow: "FFFFFF00",
-  lightgreen: "FFA9D08E",
-  green: "FF92D050",
-};
-
 const FILE_B_HEADERS = [
   "Model",
   "Part No.",
@@ -185,10 +178,8 @@ async function buildPendingPartsWorkbook(
   worksheet.addRow([...PENDING_HEADERS]);
   styleHeaderRow(worksheet);
 
-  const statusColumnIndex = PENDING_HEADERS.indexOf("Status") + 1;
-
   for (const part of parts) {
-    const row = worksheet.addRow([
+    worksheet.addRow([
       toShortDate(part.date) ?? "",
       part.batch ?? "",
       part.partNumber ?? "",
@@ -196,17 +187,6 @@ async function buildPendingPartsWorkbook(
       part.quantity,
       part.status,
     ]);
-
-    const colorKey = (part.color ?? "").toLowerCase();
-    const fillArgb = STATUS_FILL_ARGB[colorKey];
-    if (fillArgb) {
-      const statusCell = row.getCell(statusColumnIndex);
-      statusCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: fillArgb },
-      };
-    }
   }
 
   worksheet.columns = [
