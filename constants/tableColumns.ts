@@ -7,10 +7,16 @@ import { requiredModelLabel } from "@/lib/dataProcessor";
 import { toShortDate } from "@/lib/utils";
 
 const EMPTY_CELL = "—";
+const MISSING_PART_NO = "🔴 —";
 
 function displayText(value: string | undefined): string {
   const trimmed = value?.trim() ?? "";
   return trimmed || EMPTY_CELL;
+}
+
+function pendingPartNumberCell(partNumber: string | undefined): string {
+  const trimmed = partNumber?.trim() ?? "";
+  return trimmed || MISSING_PART_NO;
 }
 
 const indexColumn = <T,>(): ColumnDef<T> => ({
@@ -37,7 +43,7 @@ export function createPendingColumns(): ColumnDef<PendingPart>[] {
     {
       accessorKey: "partNumber",
       header: "Part No.",
-      cell: ({ row }) => displayText(row.original.partNumber),
+      cell: ({ row }) => pendingPartNumberCell(row.original.partNumber),
     },
     {
       accessorKey: "partName",
