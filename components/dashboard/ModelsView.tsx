@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FileDown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,35 +12,27 @@ import {
   filterRequiredByModel,
   listRequiredModels,
 } from "@/lib/dataProcessor";
-import {
-  downloadModelParts,
-} from "@/lib/exportUtils";
+import { downloadModelParts } from "@/lib/exportUtils";
 import { cn } from "@/lib/utils";
 
 export function ModelsView() {
-  const {
-    requiredParts,
-    isHydrated,
-  } = usePendingData();
+  const { requiredParts, isHydrated } = usePendingData();
   const columns = useMemo(() => createModelColumns(), []);
   const models = useMemo(
     () => listRequiredModels(requiredParts),
     [requiredParts],
   );
 
-  const [selectedModel, setSelectedModel] = useState("");
+  // User pick only — effective selection is derived (no sync effect).
+  const [modelChoice, setModelChoice] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    if (models.length === 0) {
-      setSelectedModel("");
-      return;
-    }
-
-    if (!models.includes(selectedModel)) {
-      setSelectedModel(models[0] ?? "");
-    }
-  }, [models, selectedModel]);
+  const selectedModel =
+    models.length === 0
+      ? ""
+      : modelChoice && models.includes(modelChoice)
+        ? modelChoice
+        : (models[0] ?? "");
 
   const filteredParts = useMemo(
     () =>
@@ -81,7 +73,7 @@ export function ModelsView() {
           <span className="text-muted-foreground">Model</span>
           <select
             value={selectedModel}
-            onChange={(event) => setSelectedModel(event.target.value)}
+            onChange={(event) => setModelChoice(event.target.value)}
             disabled={!isHydrated || models.length === 0}
             className={cn(
               "h-8 min-w-40 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none",
