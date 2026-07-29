@@ -35,21 +35,25 @@ export function createPendingColumns(): ColumnDef<PendingPart>[] {
     {
       accessorKey: "date",
       header: "Date",
+      enableSorting: false,
       cell: ({ row }) => toShortDate(row.original.date) ?? EMPTY_CELL,
     },
     {
       accessorKey: "batch",
       header: "Batch",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.batch),
     },
     {
       accessorKey: "partNumber",
       header: "Part No.",
+      enableSorting: false,
       cell: ({ row }) => pendingPartNumberCell(row.original.partNumber),
     },
     {
       accessorKey: "partName",
       header: "Part Name",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partName),
     },
     {
@@ -61,6 +65,7 @@ export function createPendingColumns(): ColumnDef<PendingPart>[] {
       id: "status",
       accessorFn: (row) => row.status,
       header: "Status",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.status),
     },
   ];
@@ -74,16 +79,19 @@ export function createRequiredColumns(): ColumnDef<RequiredPart>[] {
       id: "model",
       accessorFn: (row) => requiredModelLabel(row.model),
       header: "Model",
+      enableSorting: false,
       cell: ({ row }) => requiredModelLabel(row.original.model),
     },
     {
       accessorKey: "partNumber",
       header: "Part No.",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partNumber),
     },
     {
       accessorKey: "partName",
       header: "Part Name",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partName),
     },
     {
@@ -94,6 +102,7 @@ export function createRequiredColumns(): ColumnDef<RequiredPart>[] {
     {
       accessorKey: "countInPending",
       header: "Count in Pending",
+      enableSorting: false,
       cell: ({ row }) => row.original.countInPending.toLocaleString(),
     },
   ];
@@ -107,17 +116,20 @@ export function createModelColumns(): ColumnDef<RequiredPart>[] {
       id: "model",
       accessorFn: (row) => requiredModelLabel(row.model),
       header: "Model",
+      enableSorting: false,
       meta: { className: "pl-20" },
       cell: ({ row }) => requiredModelLabel(row.original.model),
     },
     {
       accessorKey: "partNumber",
       header: "Part No.",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partNumber),
     },
     {
       accessorKey: "partName",
       header: "Part Name",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partName),
     },
     {
@@ -136,11 +148,13 @@ export function createUniquePartColumns(): ColumnDef<UniquePart>[] {
     {
       accessorKey: "partNumber",
       header: "Part No.",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partNumber),
     },
     {
       accessorKey: "partName",
       header: "Part Name",
+      enableSorting: false,
       cell: ({ row }) => displayText(row.original.partName),
     },
     {

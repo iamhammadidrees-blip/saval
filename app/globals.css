@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,24 +49,26 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Polished Bay — silver · shine · edgy (from Doc/ui-preview-silver.html) */
+  /* Matches page wash mid-tone so UI chips don't float on a separate patch */
+  --background: #e9ecef;
+  --foreground: #23272E;
+  --card: #FFFFFF;
+  --card-foreground: #23272E;
+  --popover: #FFFFFF;
+  --popover-foreground: #23272E;
+  --primary: #2B3038;
+  --primary-foreground: #F4F5F7;
+  --secondary: #E3E6EA;
+  --secondary-foreground: #5C6370;
+  --muted: #E3E6EA;
+  --muted-foreground: #5C6370;
+  --accent: #E3E6EA;
+  --accent-foreground: #23272E;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: #C2C7CE;
+  --input: #C2C7CE;
+  --ring: #C45C26;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -121,10 +123,29 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
-    @apply font-sans;
+    @apply h-full font-sans;
+    /* Single viewport wash — fixed so scroll never tiles or starts a new band */
+    background-color: #e9ecef;
+    background-image:
+      radial-gradient(
+        110% 70% at 50% -8%,
+        #ffffff 0%,
+        rgba(247, 248, 250, 0.85) 32%,
+        rgba(233, 236, 239, 0) 68%
+      ),
+      linear-gradient(
+        180deg,
+        #f7f8fa 0%,
+        #eef1f4 38%,
+        #e9ecef 72%,
+        #e3e6ea 100%
+      );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+  }
+  body {
+    @apply min-h-full flex flex-col bg-transparent font-sans text-foreground;
   }
 }

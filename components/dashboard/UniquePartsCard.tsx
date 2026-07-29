@@ -20,6 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  plateCardClass,
+  plateNumClass,
+  plateSubClass,
+  plateTagClass,
+} from "@/constants/plateStyles";
 import { createUniquePartColumns } from "@/constants/tableColumns";
 import { aggregateUniqueParts } from "@/lib/dataProcessor";
 import { downloadUniqueParts } from "@/lib/exportUtils";
@@ -59,15 +65,15 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
 
   return (
     <>
-      <Card size="sm">
+      <Card size="sm" className={plateCardClass}>
         <CardHeader>
-          <CardDescription>Unique Parts</CardDescription>
-          <CardTitle className="text-3xl font-semibold tabular-nums">
+          <CardDescription className={plateTagClass}>Unique Parts</CardDescription>
+          <CardTitle className={plateNumClass}>
             {uniqueParts.length.toLocaleString()}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          <p className="text-xs text-muted-foreground">
+          <p className={plateSubClass}>
             Distinct part numbers
           </p>
           <div className="flex flex-wrap gap-2">
@@ -76,6 +82,7 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
               size="sm"
               disabled={!hasParts}
               onClick={() => setOpen(true)}
+              className="border-[#c2c7ce] bg-white/80"
             >
               <Eye data-icon="inline-start" />
               View
@@ -85,6 +92,7 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
               size="sm"
               disabled={!hasParts || isExporting}
               onClick={() => void handleDownload()}
+              className="border-[#c2c7ce] bg-white/80"
             >
               <FileDown data-icon="inline-start" />
               Download

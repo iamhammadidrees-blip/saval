@@ -28,7 +28,7 @@ export function FileDropzone() {
         {...getRootProps({
           className: cn(
             "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors",
-            "bg-[radial-gradient(120%_90%_at_50%_20%,#ffffff_0%,#f4f4f5_42%,#e4e4e7_68%,transparent_100%)]",
+            "bg-[radial-gradient(120%_90%_at_50%_20%,#ffffff_0%,#f1f2f4_45%,#D5D9DE_100%)]",
             isParsing
               ? "cursor-wait border-primary/40 opacity-80"
               : "cursor-pointer",

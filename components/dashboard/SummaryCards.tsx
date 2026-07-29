@@ -11,6 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  plateCardClass,
+  plateNumClass,
+  plateSubClass,
+  plateTagClass,
+} from "@/constants/plateStyles";
 import { useAppStore } from "@/store/useAppStore";
 
 export function SummaryCards() {
@@ -24,31 +30,33 @@ export function SummaryCards() {
   );
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-4 gap-3.5">
       <UndefinedRowsCard pendingParts={pendingParts} />
 
-      <Card size="sm">
+      <Card size="sm" className={plateCardClass}>
         <CardHeader>
-          <CardDescription>Total Qty</CardDescription>
-          <CardTitle className="text-3xl font-semibold tabular-nums">
+          <CardDescription className={plateTagClass}>Total Qty</CardDescription>
+          <CardTitle className={plateNumClass}>
             {totalQuantity.toLocaleString()}
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-xs text-muted-foreground">
+        <CardContent className={plateSubClass}>
           Sum of affected qty
         </CardContent>
       </Card>
 
       <UniquePartsCard pendingParts={pendingParts} />
 
-      <Card size="sm">
+      <Card size="sm" className={plateCardClass}>
         <CardHeader>
-          <CardDescription>Files Uploaded</CardDescription>
-          <CardTitle className="text-3xl font-semibold tabular-nums">
+          <CardDescription className={plateTagClass}>
+            Files Uploaded
+          </CardDescription>
+          <CardTitle className={plateNumClass}>
             {files.length.toLocaleString()}
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-xs text-muted-foreground">
+        <CardContent className={plateSubClass}>
           Active source files
         </CardContent>
       </Card>

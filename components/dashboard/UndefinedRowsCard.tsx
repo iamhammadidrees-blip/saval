@@ -16,6 +16,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  plateCardClass,
+  plateNumClass,
+  plateSubClass,
+  plateTagClass,
+} from "@/constants/plateStyles";
 import { isMissingPartNumber } from "@/lib/dataProcessor";
 import type { PendingPart } from "@/lib/types";
 
@@ -35,21 +41,21 @@ export function UndefinedRowsCard({ pendingParts }: UndefinedRowsCardProps) {
   const hasUndefinedRows = undefinedCount > 0;
 
   return (
-    <Card size="sm">
+    <Card size="sm" className={plateCardClass}>
       <CardHeader>
-        <CardDescription>Total Pending</CardDescription>
-        <CardTitle className="text-3xl font-semibold tabular-nums">
+        <CardDescription className={plateTagClass}>Total Pending</CardDescription>
+        <CardTitle className={plateNumClass}>
           {pendingParts.length.toLocaleString()}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <p className="text-xs text-muted-foreground">Pending rows</p>
+        <p className={plateSubClass}>Pending rows</p>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="w-fit justify-between gap-2"
+              className="w-fit justify-between gap-2 border-[#c2c7ce] bg-white/80"
               disabled={!hasUndefinedRows}
             >
               Undefined Rows

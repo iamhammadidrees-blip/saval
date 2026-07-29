@@ -21,6 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  SHEET_BAR_STICKY_TOP,
+  sheetBarClass,
+  sheetClass,
+  sheetRowsClass,
+  sheetSearchClass,
+} from "@/constants/plateStyles";
 import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData> {
@@ -34,9 +41,9 @@ interface DataTableProps<TData> {
   tableClassName?: string;
   /** Keep headers visible while scrolling inside the table container. */
   stickyHeader?: boolean;
-  /** Keep headers fixed at the top of the page while the document scrolls. */
+  /** Keep bar + headers fixed at the top of the page while the document scrolls. */
   pageStickyHeader?: boolean;
-  /** Extra controls on the search bar row (right of the search input). */
+  /** Extra controls on the search bar row (right side, before row count). */
   toolbarActions?: ReactNode;
 }
 
@@ -63,8 +70,10 @@ function SortIcon({
 }
 
 /**
- * Shared TanStack Table wrapper used by Pending and Required tables.
- * Owns sorting, global search, and empty-state rendering.
+ * Shared TanStack Table wrapper.
+ * Sheet chrome: white `.bar` over brushed thead. Sticky modes:
+ * - stickyHeader: bar stays outside scroll; thead sticks at top of scroll box
+ * - pageStickyHeader: bar sticks at top-0; thead sticks under bar (top-10)
  */
 export function DataTable<TData>({
   columns,
@@ -79,7 +88,6 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const headerStuck = stickyHeader || pageStickyHeader;
 
   const table = useReactTable({
     data,
@@ -105,36 +113,50 @@ export function DataTable<TData>({
   });
 
   const rows = table.getRowModel().rows;
+  const rowLabel = `${rows.length.toLocaleString()} row${rows.length === 1 ? "" : "s"}`;
 
   return (
-    <div className={cn("flex min-h-0 flex-col gap-3", className)}>
-      <div className="relative flex shrink-0 flex-wrap items-center justify-center gap-3">
-        <p className="absolute left-0 text-xs text-muted-foreground tabular-nums">
-          {rows.length.toLocaleString()} row{rows.length === 1 ? "" : "s"}
-        </p>
-        <Input
-          value={globalFilter}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          placeholder={searchPlaceholder}
-          className="max-w-sm"
-          aria-label="Search table"
-        />
-        {toolbarActions ? (
-          <div className="absolute right-0 flex flex-wrap items-center gap-2">
-            {toolbarActions}
-          </div>
-        ) : null}
+    <div
+      className={cn(
+        sheetClass,
+        "flex min-h-0 flex-col",
+        stickyHeader && "flex-1 overflow-hidden",
+        className,
+      )}
+    >
+      {/* White bar over header — sticks with page scroll when pageStickyHeader */}
+      <div
+        className={cn(
+          sheetBarClass,
+          "shrink-0",
+          pageStickyHeader && "sticky top-0 z-20",
+        )}
+      >
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+          <Input
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            placeholder={searchPlaceholder}
+            className={sheetSearchClass}
+            aria-label="Search table"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {toolbarActions}
+          <span className={sheetRowsClass}>{rowLabel}</span>
+        </div>
       </div>
 
       {data.length === 0 ? (
-        <div className="flex min-h-64 flex-1 items-center justify-center rounded-xl border border-dashed bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+        <div className="flex min-h-64 flex-1 items-center justify-center p-8 text-center">
+          <p className="text-sm text-[#5c6370]">{emptyMessage}</p>
         </div>
       ) : (
         <div
           className={cn(
-            "min-h-0 rounded-xl border bg-card",
-            stickyHeader ? "flex-1 overflow-hidden" : tableClassName,
+            "min-h-0",
+            stickyHeader && "flex-1 overflow-hidden",
+            !stickyHeader && tableClassName,
           )}
         >
           <Table
@@ -147,11 +169,13 @@ export function DataTable<TData>({
             }
           >
             <TableHeader
-              className={
-                headerStuck
-                  ? "sticky top-0 z-10 bg-card [&_tr]:border-b"
-                  : undefined
-              }
+              className={cn(
+                stickyHeader && "sticky top-0 z-10",
+                pageStickyHeader &&
+                  cn("sticky z-10", SHEET_BAR_STICKY_TOP),
+                (stickyHeader || pageStickyHeader) &&
+                  "[&_tr]:border-b [&_tr]:border-[#c2c7ce]",
+              )}
             >
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -162,10 +186,7 @@ export function DataTable<TData>({
                     return (
                       <TableHead
                         key={header.id}
-                        className={cn(
-                          headerStuck && "bg-card",
-                          columnClassName(header.column.columnDef),
-                        )}
+                        className={columnClassName(header.column.columnDef)}
                       >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
@@ -197,7 +218,10 @@ export function DataTable<TData>({
             <TableBody>
               {rows.length > 0 ? (
                 rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className="border-[#edeff2] hover:bg-[#f6f7f9]"
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
@@ -215,7 +239,7 @@ export function DataTable<TData>({
                 <TableRow className="hover:bg-transparent">
                   <TableCell
                     colSpan={columns.length}
-                    className="h-32 text-center text-muted-foreground"
+                    className="h-32 text-center text-[#5c6370]"
                   >
                     No matching rows.
                   </TableCell>

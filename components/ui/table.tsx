@@ -2,6 +2,7 @@
 
 import * as React from "react"
 
+import { sheetHeaderClass } from "@/constants/plateStyles"
 import { cn } from "@/lib/utils"
 
 function Table({
@@ -32,7 +33,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn("[&_tr]:border-b [&_tr]:border-[#c2c7ce]", className)}
       {...props}
     />
   )
@@ -79,7 +80,8 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+        sheetHeaderClass,
+        "whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

@@ -5,6 +5,8 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { sheetHeaderClass } from "@/constants/plateStyles";
+import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
 /**
@@ -50,11 +52,11 @@ export function UploadedFilesList() {
     <div className="overflow-hidden rounded-xl border bg-card">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="px-3 py-2 text-center font-medium">File name</th>
-            <th className="px-3 py-2 font-medium">Uploaded at</th>
-            <th className="px-3 py-2 font-medium">Pending rows</th>
-            <th className="px-3 py-2 font-medium">Actions</th>
+          <tr className="border-b border-[#c2c7ce] text-left">
+            <th className={cn(sheetHeaderClass, "text-center")}>File name</th>
+            <th className={sheetHeaderClass}>Uploaded at</th>
+            <th className={sheetHeaderClass}>Pending rows</th>
+            <th className={sheetHeaderClass}>Actions</th>
           </tr>
         </thead>
         <tbody>
