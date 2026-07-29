@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   plateCardClass,
+  plateMetricRowClass,
   plateNumClass,
   plateSubClass,
   plateTagClass,
@@ -68,14 +69,14 @@ export function UniquePartsCard({ pendingParts }: UniquePartsCardProps) {
       <Card size="sm" className={plateCardClass}>
         <CardHeader>
           <CardDescription className={plateTagClass}>Unique Parts</CardDescription>
-          <CardTitle className={plateNumClass}>
-            {uniqueParts.length.toLocaleString()}
-          </CardTitle>
+          <div className={plateMetricRowClass}>
+            <CardTitle className={plateNumClass}>
+              {uniqueParts.length.toLocaleString()}
+            </CardTitle>
+            <span className={plateSubClass}>Distinct part numbers</span>
+          </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          <p className={plateSubClass}>
-            Distinct part numbers
-          </p>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"

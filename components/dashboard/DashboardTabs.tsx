@@ -33,7 +33,7 @@ export function DashboardTabs() {
           Pending
         </TabsTrigger>
         <TabsTrigger value="required" className={panelKeyClass}>
-          Required
+          Merged
         </TabsTrigger>
         <TabsTrigger value="models" className={panelKeyClass}>
           Models

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pending Parts Dashboard",
-  description: "Track and manage pending parts.",
+  title: "Hold-Parts-Dashboard",
+  description: "Track and manage on-hold vehicle parts.",
 };
 
 export default function RootLayout({

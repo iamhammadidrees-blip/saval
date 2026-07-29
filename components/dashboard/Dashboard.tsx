@@ -54,19 +54,12 @@ function parseBackupSnapshot(raw: unknown): BackupSnapshot {
 }
 
 export function Dashboard() {
-  const { lastUpdated, isHydrated, restoreFromSnapshot, clearAll } =
-    usePendingData();
+  const { isHydrated, restoreFromSnapshot, clearAll } = usePendingData();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const restoreInputRef = useRef<HTMLInputElement>(null);
-
-  const lastUpdatedText = !isHydrated
-    ? "Loading…"
-    : lastUpdated
-      ? `Last updated ${new Date(lastUpdated).toLocaleString()}`
-      : "No data yet";
 
   const busy = isBackingUp || isRestoring || isClearing;
 
@@ -154,9 +147,11 @@ export function Dashboard() {
       <header className="flex items-center justify-between gap-4 border-b pb-5">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Pending Parts Dashboard
+            Hold-Parts-Dashboard
           </h1>
-          <p className="text-sm text-muted-foreground">{lastUpdatedText}</p>
+          <p className="text-sm text-muted-foreground">
+            | Pending filters | Merged Numbers | Models call | Unique counts | qty |
+          </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button

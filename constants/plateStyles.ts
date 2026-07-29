@@ -10,10 +10,14 @@ export const plateCardClass = cn(
 
 export const plateTagClass = "text-sm text-muted-foreground";
 
+/** Exact demo `.plate .num`: 34px / weight 600 / lh 1.15 */
 export const plateNumClass =
-  "text-3xl font-semibold tabular-nums text-foreground";
+  "mt-0.5 font-mono text-[33px]! leading-[1.01] font-semibold tabular-nums text-foreground";
 
 export const plateSubClass = "text-xs text-muted-foreground";
+
+export const plateMetricRowClass =
+  "flex flex-wrap items-baseline gap-2";
 
 /** Worksheet thead — brushed grey strip; original header type scale */
 export const sheetHeaderClass = cn(

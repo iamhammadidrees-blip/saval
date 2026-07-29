@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/popover";
 import {
   plateCardClass,
+  plateMetricRowClass,
   plateNumClass,
   plateSubClass,
   plateTagClass,
@@ -44,12 +45,14 @@ export function UndefinedRowsCard({ pendingParts }: UndefinedRowsCardProps) {
     <Card size="sm" className={plateCardClass}>
       <CardHeader>
         <CardDescription className={plateTagClass}>Total Pending</CardDescription>
-        <CardTitle className={plateNumClass}>
-          {pendingParts.length.toLocaleString()}
-        </CardTitle>
+        <div className={plateMetricRowClass}>
+          <CardTitle className={plateNumClass}>
+            {pendingParts.length.toLocaleString()}
+          </CardTitle>
+          <span className={plateSubClass}>Pending rows</span>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <p className={plateSubClass}>Pending rows</p>
         <Popover>
           <PopoverTrigger asChild>
             <Button

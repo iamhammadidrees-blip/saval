@@ -6,13 +6,13 @@ import { UndefinedRowsCard } from "@/components/dashboard/UndefinedRowsCard";
 import { UniquePartsCard } from "@/components/dashboard/UniquePartsCard";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
   plateCardClass,
+  plateMetricRowClass,
   plateNumClass,
   plateSubClass,
   plateTagClass,
@@ -36,13 +36,13 @@ export function SummaryCards() {
       <Card size="sm" className={plateCardClass}>
         <CardHeader>
           <CardDescription className={plateTagClass}>Total Qty</CardDescription>
-          <CardTitle className={plateNumClass}>
-            {totalQuantity.toLocaleString()}
-          </CardTitle>
+          <div className={plateMetricRowClass}>
+            <CardTitle className={plateNumClass}>
+              {totalQuantity.toLocaleString()}
+            </CardTitle>
+            <span className={plateSubClass}>Sum of affected qty</span>
+          </div>
         </CardHeader>
-        <CardContent className={plateSubClass}>
-          Sum of affected qty
-        </CardContent>
       </Card>
 
       <UniquePartsCard pendingParts={pendingParts} />
@@ -52,13 +52,13 @@ export function SummaryCards() {
           <CardDescription className={plateTagClass}>
             Files Uploaded
           </CardDescription>
-          <CardTitle className={plateNumClass}>
-            {files.length.toLocaleString()}
-          </CardTitle>
+          <div className={plateMetricRowClass}>
+            <CardTitle className={plateNumClass}>
+              {files.length.toLocaleString()}
+            </CardTitle>
+            <span className={plateSubClass}>Active source files</span>
+          </div>
         </CardHeader>
-        <CardContent className={plateSubClass}>
-          Active source files
-        </CardContent>
       </Card>
     </div>
   );
