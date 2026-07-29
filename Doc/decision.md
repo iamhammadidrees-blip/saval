@@ -75,10 +75,12 @@ upsertFile()  (Zustand + IndexedDB)
   4. update in-memory store
   ↓
 Dashboard
-  - Pending table ← pendingParts
-  - Required table ← aggregateRequired(pendingParts)  [NOT stored]
+  - Pending table ← pendingParts (+ Download Pending)
+  - Merged (Required) ← aggregateRequired(pendingParts)  [NOT stored] (+ File B)
   - Models tab ← filter Required by model
   - Unique Parts ← aggregateUniqueParts(pendingParts) [NOT stored]
+  - Undefined Rows ← empty Part No. indices on Total Pending card
+  - Backup / Restore / Clear All ← header (IndexedDB snapshot)
 ```
 
 **Stored in IndexedDB:** `uploadedFiles`, `pendingParts` (pending rows only, with status + color from the **2nd** status column).
@@ -87,20 +89,34 @@ Dashboard
 
 **On refresh:** hydrate() → IndexedDB → Zustand → tables (no re-parse until re-upload).
 
-**Bottom line:** 2nd status column supplies text + fill; **text containing “resolve” drops the row**; everything else is pending and hits IndexedDB; Required / Models / Unique are computed from that list.
+**Bottom line:** 2nd status column supplies text + fill; **text containing “resolve” drops the row**; everything else is pending and hits IndexedDB; Merged / Models / Unique / Undefined are computed from that list.
 
 ---
 
-### 4. Required aggregation (Part No + Model) — FINAL
+### 4. Required / Merged aggregation (Part No + Model) — FINAL
+
+UI tab label **Merged** = Required table.
 
 ```text
-Group key = normalize(partNumber || partName) + "|" + normalize(model)
+Group key = normalize(partNumber) + "|" + normalize(model)
 ```
 
+- Group uses **Part No. only** (`requiredPartKey`) — **not** `partNumber || partName`
+- Rows with empty Part No. are **skipped** (`isMissingPartNumber`) — they stay in Pending and appear under **Undefined Rows**
 - `model` = `extractModelFromBatch(batch)` — first 3 letters of Batch (e.g. `ALW6001` → `ALW`)
 - Empty / unparseable batch → model key `""` (shared “no model” bucket)
 - Same Part No + same model → one Required row; sum Affected Qty; `countInPending++`
 - Same Part No + different models → separate Required rows
 - `RequiredPart.model` is a single model string (not a joined list)
 - Unique Parts card/view = **Part No. only** (`aggregateUniqueParts`); rows without Part No are skipped
-- Models tab / Required / exports label empty model as **`UNKNOWN`** via `requiredModelLabel()` (tables and Excel — not `—`)
+- Merged / Models / exports label empty model as **`UNKNOWN`** via `requiredModelLabel()` (tables and Excel — not `—`)
+
+### 5. Downloads (where buttons live)
+
+| Export | UI location |
+|--------|-------------|
+| Download Pending | Pending tab toolbar |
+| Download File B | Merged (Required) tab toolbar |
+| Download {model} | Models tab (beside model dropdown) |
+| Unique Parts Excel | Unique Parts card |
+| Backup JSON | Header Backup button |

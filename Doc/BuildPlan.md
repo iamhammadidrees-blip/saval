@@ -61,13 +61,15 @@ Architecture / Data flow
 
 flowchart LR
     Dropzone[FileDropzone] --> Parser[excelParser: ExcelJS + color detect]
-    Parser --> Processor[dataProcessor: filter pending + replace-by-fileName]
+    Parser --> Processor[dataProcessor: resolve-text filter + replace-by-fileName]
     Processor --> DB[(IndexedDB via idb)]
     DB --> Store[Zustand store]
-    Store --> Agg[aggregateRequired computed]
-    Store --> PendingTab[PendingTable]
-    Agg --> RequiredTab[RequiredTable + SummaryCards]
-    Agg --> Export[exportUtils: File B via ExcelJS]
+    Store --> Agg[aggregateRequired + Unique + Models]
+    Store --> PendingTab[PendingTable + Download Pending]
+    Agg --> MergedTab[Merged RequiredTable + File B]
+    Agg --> ModelsTab[ModelsView]
+    Agg --> UniqueCard[UniquePartsCard]
+    Agg --> Export[exportUtils via ExcelJS]
 
 
 
@@ -77,11 +79,11 @@ IndexedDB stores two object stores: uploadedFiles (keyed by fileName) and pendin
 
 
 
-RequiredPart[] is never stored — computed via a memoized selector grouping by normalized partNumber ?? partName.
+RequiredPart[] is never stored — computed via aggregateRequired, grouping by Part No. + Model (skips empty Part No.). Also computed: Unique Parts, Models filter, Undefined Rows.
 
 
 
-Data models in `lib/types.ts` (FINAL as coded): `UploadedFile`, `PendingPart` (includes `status` + `color` from the **2nd status column**), `RequiredPart` (includes `model`), `UniquePart`, `BackupSnapshot`. Pending filter = Status text includes `"resolve"` → drop. See `Doc/decision.md` / `Doc/applied-changes.md`.
+Data models in `lib/types.ts` (FINAL as coded): `UploadedFile`, `PendingPart` (includes `status` + `color` from the **2nd status column**), `RequiredPart` (includes `model`), `UniquePart`, `BackupSnapshot`. Pending filter = Status text includes `"resolve"` → drop. UI tab **Merged** = Required table. See `Doc/decision.md` / `Doc/applied-changes.md` / `Doc/logic-flow.md`.
 
 Folder structure
 
@@ -355,7 +357,7 @@ Replace starter content in app/page.tsx with a client dashboard composition:
 
 
 
-Header — app title "Pending Parts Dashboard", last-updated text (from store), placeholder action buttons (Export / Backup disabled or no-ops until Phase 2/3).
+Header — app title Hold-Parts-Dashboard (as coded); last-updated text; Backup / Restore / Clear All wired in Phase 3.
 
 
 SummaryCards — four cards reading from store (will be 0 until Phase 2):
@@ -366,7 +368,7 @@ Total Pending rows
 Total Qty (sum of quantity)
 
 
-Unique Parts (distinct partNumber/partName)
+Unique Parts (distinct Part No. via aggregateUniqueParts) + Undefined Rows on Total Pending
 
 
 Files Uploaded (files.length)

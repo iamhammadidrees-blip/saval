@@ -1,8 +1,10 @@
 # Logic flow — filters & tables (FINAL as coded)
 
 Source: `lib/excelParser.ts`, `lib/dataProcessor.ts`, dashboard components.  
-All views below start from **pending parts** (or Required derived from them).  
+All views below start from **pending parts** (or Required / Merged derived from them).  
 Required / Models / Unique are **not** stored in IndexedDB — recomputed from `pendingParts`.
+
+UI tab label **Merged** = Required table (`TabsTrigger value="required"`).
 
 ---
 
@@ -16,10 +18,13 @@ File A upload
   → IndexedDB + Zustand   (pendingParts)
         │
         ├─→ Pending table          (raw pendingParts)
-        ├─→ aggregateRequired()    → Required table / File B
-        │         │
+        │     └─ Download Pending (Pending toolbar)
+        ├─→ aggregateRequired()    → Merged (Required) table
+        │         │                   └─ Download File B (Merged toolbar)
         │         └─→ filterRequiredByModel() → Models tab
-        └─→ aggregateUniqueParts() → Unique Parts card
+        │                   └─ Download {model} Excel
+        ├─→ aggregateUniqueParts() → Unique Parts card (View / Download)
+        └─→ isMissingPartNumber()  → Undefined Rows on Total Pending card
 ```
 
 ---
@@ -33,7 +38,7 @@ parseFileA()
   → filterPending() / isPendingRow()
   → toPendingParts()
   → store pendingParts
-  → Pending table
+  → Pending table (+ Download Pending)
 ```
 
 Stored in IndexedDB. Survives refresh via hydrate.
@@ -48,19 +53,17 @@ Stored in IndexedDB. Survives refresh via hydrate.
 | Qty | Affected Qty from File A (invalid → 0) |
 | Skipped at parse | empty Part No **and** empty Part Name |
 
-Download Pending Excel is available from the **Models** tab toolbar (with File B).
-
 ---
 
-## 2. Required table
+## 2. Merged (Required) table
 
 What it does: takes pending parts only and groups by **Part No. + Model**.
 
 ```text
 pendingParts
-  → aggregateRequired()
-  → Required table
-  → Download File B (Models tab toolbar)
+  → aggregateRequired()   (skips empty Part No.)
+  → Merged table
+  → Download File B (Merged toolbar)
 ```
 
 Not stored in IndexedDB — recomputed whenever `pendingParts` changes.
@@ -69,19 +72,20 @@ Not stored in IndexedDB — recomputed whenever `pendingParts` changes.
 
 | Rule | Behavior |
 |------|----------|
-| Group key | `normalize(partNumber) + "\|" + normalize(model)` |
+| Group key | `normalize(partNumber) + "\|" + normalize(model)` — **Part No. only** (not Name fallback) |
 | Model | `extractModelFromBatch(batch)` — first 3 letters (e.g. ALW6001 → ALW) |
 | Empty model | shared `""` bucket for that part; display / export as **`UNKNOWN`** |
 | Same part + same model | **1 row**; sum qty; `countInPending++` |
 | Same part + different models | **separate rows** |
-| Skipped | no Part No. |
+| Skipped | no Part No. (those stay in Pending + Undefined Rows only) |
 | Qty | sum of pending `quantity` in the group |
+| Columns | #, Model, Part No., Part Name, Total Qty, Count in Pending |
 
 ---
 
 ## 3. Models list
 
-What it does: takes **Required** rows and filters to one selected model.
+What it does: takes **Required / Merged** rows and filters to one selected model.
 
 ```text
 requiredParts (= aggregateRequired(pendingParts))
@@ -89,8 +93,6 @@ requiredParts (= aggregateRequired(pendingParts))
   → filterRequiredByModel()  → table for selected model
   → Download model Excel
 ```
-
-Also hosts shared exports: **Download File B** + **Download Pending** on the search toolbar.
 
 Not stored — derived from Required.
 
@@ -134,11 +136,27 @@ Not stored in IndexedDB — recomputed whenever `pendingParts` changes.
 
 ---
 
+## 5. Undefined Rows
+
+What it does: surfaces pending rows that have **no Part No.** (still shown in Pending table; excluded from Merged / Unique / Models).
+
+```text
+pendingParts
+  → isMissingPartNumber()
+  → Undefined Rows popover on Total Pending card
+  → lists 1-based indices into the pending list
+```
+
+Not stored — derived from `pendingParts`.
+
+---
+
 ## Quick compare
 
 | View | Source | Group / filter key |
 |------|--------|-------------------|
 | Pending | File A → status **text** filter | none (row-level) |
-| Required | pendingParts | Part No (or Name) **+ Model** |
+| Merged (Required) | pendingParts | Part No. **+ Model** (skip empty Part No.) |
 | Models | Required | selected Model (`UNKNOWN` if empty) |
 | Unique Parts | pendingParts | Part No **only** |
+| Undefined Rows | pendingParts | empty Part No. (indices only) |

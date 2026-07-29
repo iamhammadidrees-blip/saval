@@ -87,8 +87,9 @@ Wire via `useEffect` in Dashboard / `usePendingData`.
 
 ### Step 1.8 — Dashboard shell UI
 
-1. Header — title, last-updated, placeholder Export/Backup
-2. SummaryCards — Total Pending, Total Qty, Unique Parts, Files Uploaded (zeros until Phase 2)
+1. Header — title Hold-Parts-Dashboard (as coded), last-updated, Backup / Restore / Clear All (Phase 3)
+2. SummaryCards — Total Pending (+ Undefined Rows), Total Qty, Unique Parts, Files Uploaded
+3. Tabs — Pending · Merged (Required) · Models · Files Uploaded
 3. FileDropzone — accept .xlsx/.xls, multi; toast only (no ExcelJS yet)
 4. DashboardTabs — Pending / Required placeholders with empty states
 5. Simple industrial layout; polish later

@@ -34,22 +34,22 @@ Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 | Required **Model** from batch (first 3 letters) | `utils` + `dataProcessor` + columns |
 | Empty model → **`UNKNOWN`** in UI + exports | `requiredModelLabel()` |
 | **Models** tab (filter + per-model export) | `ModelsView.tsx` |
-| File B + Download Pending on Models toolbar | `ModelsView.tsx` `toolbarActions` |
+| File B + Download Pending on own tab toolbars | Pending = Download Pending; Merged = File B (`PendingTable` / `RequiredTable`) |
 | **Files Uploaded** tab + per-file delete | `UploadedFilesList.tsx` (`window.confirm`) |
 | Unique Parts card: View dialog + Download | `UniquePartsCard.tsx` + `aggregateUniqueParts` |
-| Sticky table headers (page scroll) | Pending / Required / Models `pageStickyHeader` |
+| Sticky table headers (page scroll) | Pending / Merged / Models `pageStickyHeader` |
 | Unique dialog scroll + sticky header | `stickyHeader` + max-height scroll |
 | Industrial tab rail + dropzone silver splash | `DashboardTabs.tsx`, `FileDropzone.tsx` |
-| Header last-updated + **Backup wired** | `Dashboard.tsx` |
-| IDB `exportSnapshot` / `importSnapshot` | `lib/indexedDB.ts` (export used by Backup; import still unused) |
+| Header last-updated + **Backup / Restore / Clear All wired** | `Dashboard.tsx` |
+| IDB `exportSnapshot` / `importSnapshot` | `lib/indexedDB.ts` — both used (Backup + Restore) |
+| Polished Bay theme | `app/globals.css` + dropzone / table header / tab rail |
+| Undefined Rows on Total Pending | `UndefinedRowsCard.tsx` |
+| Downloads on own tabs | Pending → Download Pending; Merged → File B; Models → model Excel |
 
 ### Still open (this Phase 3 roadmap)
 
 | Gap | Notes |
 |---|---|
-| Backup button | **Wired** — downloads `pending-parts-backup_YYYY-MM-DD.json` via `exportSnapshot()` |
-| Restore | **Wired** — JSON file → confirm → `importSnapshot` + store refresh |
-| Clear All | **Wired** — header confirm → `clearAll()` |
 | Confirm dialogs | File delete still uses `window.confirm`; prefer shadcn Dialog |
 | Hydrate loading | Header shows “Loading…” only — optional fuller skeleton |
 | Responsive polish | Summary cards are `grid-cols-4` — tighten mobile |
@@ -62,8 +62,8 @@ Do **not** rebuild these. Phase 3 only polishes, wires missing UI, and deploys.
 
 Client can open the **live Vercel URL** and:
 
-1. Upload File A → see Pending / Required / Models / Unique Parts  
-2. Download File B, Pending, model, and Unique exports  
+1. Upload File A → see Pending / Merged / Models / Unique Parts / Undefined Rows  
+2. Download File B (Merged), Pending (Pending tab), model, and Unique exports  
 3. Backup / Restore / Clear All safely  
 4. Delete one uploaded file without breaking others  
 5. Follow a short user guide without developer help  
@@ -75,7 +75,7 @@ Client can open the **live Vercel URL** and:
 ```
 Dashboard header
   ├── Backup  → exportSnapshot() → JSON download     [DONE]
-  ├── Restore → file picker → importSnapshot()       [NEW UI]
+  ├── Restore → file picker → importSnapshot()       [DONE]
   └── Clear All → confirm → clearAll()               [DONE]
 
 Files Uploaded tab
@@ -83,7 +83,6 @@ Files Uploaded tab
 
 Then: responsive pass → pnpm build → Vercel → USER_GUIDE
 ```
-
 ---
 
 ## Step 3.1 — Wire Backup (download JSON) ✅ DONE
@@ -211,11 +210,7 @@ README / `Doc/USER_GUIDE.md`: upload, **resolve** text filter, Model = first 3 b
 ## Files to touch in Phase 3
 
 ```
-components/dashboard/Dashboard.tsx          ← wire Backup / Restore / Clear All
-components/common/BackupRestore.tsx         ← optional
 components/upload/UploadedFilesList.tsx     ← Dialog confirm polish
-store/useAppStore.ts                        ← optional restoreFromSnapshot helper
-lib/indexedDB.ts                            ← already has export/import
 README.md / Doc/USER_GUIDE.md
 ```
 
@@ -227,9 +222,8 @@ README.md / Doc/USER_GUIDE.md
 
 | Order | Step | Focus |
 |------:|------|--------|
-| 1 | 3.1–3.3 | Backup + Restore + Clear All |
-| 2 | 3.4–3.5 | File-delete Dialog + loading/toast audit |
-| 3 | 3.6 | Responsive polish |
-| 4 | 3.7 | lint + production build smoke |
-| 5 | 3.8 | Vercel deploy |
-| 6 | 3.9–3.10 | User guide + acceptance checklist |
+| 1 | 3.4–3.5 | File-delete Dialog + loading/toast audit |
+| 2 | 3.6 | Responsive polish |
+| 3 | 3.7 | lint + production build smoke |
+| 4 | 3.8 | Vercel deploy |
+| 5 | 3.9–3.10 | User guide + acceptance checklist |

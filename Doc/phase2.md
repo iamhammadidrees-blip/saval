@@ -134,13 +134,15 @@ toPendingParts(rows: RawParsedRow[], fileName: string): PendingPart[]
 aggregateRequired(parts: PendingPart[]): RequiredPart[]
 ```
 
-### Pending decision (confirmed)
+### Pending decision (APPLIED — text only)
 
-1. **Color first:** if **2nd status column** fill is orange/yellow/light-green → pending; green → not pending
-2. **Keyword fallback** if color is missing/none:
-   - pending keywords → pending
-   - resolved keywords / PK-ref pattern → not pending
-3. If neither matches → treat as **not pending** (safe default; log warning)
+**Current code (`isPendingRow`):** drop if Status 2 text includes `"resolve"`; else keep. Color is **not** used for keep/drop.
+
+> **Historical Phase 2 design (superseded — do not implement):**
+> 1. Color first: orange/yellow/light-green → pending; green → not pending  
+> 2. Keyword fallback if color missing  
+> 3. Safe default not-pending  
+> See `Doc/decision.md` + `Doc/applied-changes.md`.
 
 ### Map to `PendingPart`
 
@@ -152,8 +154,8 @@ aggregateRequired(parts: PendingPart[]): RequiredPart[]
 
 ### Aggregate Required Parts (FINAL as coded)
 
-Group key: `normalize(partNumber || partName) + "|" + normalize(model)`  
-where `model = extractModelFromBatch(batch)`.
+Group key: `normalize(partNumber) + "|" + normalize(model)`  
+where `model = extractModelFromBatch(batch)`. Rows with empty Part No. are skipped.
 
 For each group:
 
@@ -215,8 +217,9 @@ Compute from store `pendingParts` + `files`:
 |---|---|
 | Total Pending | `pendingParts.length` |
 | Total Qty | `sum(quantity)` |
-| Unique Parts | distinct group keys (same as Required) |
+| Unique Parts | distinct Part No. via `aggregateUniqueParts` (not same as Required) |
 | Files Uploaded | `files.length` |
+| Undefined Rows | count / indices of pending rows with empty Part No. (on Total Pending card) |
 
 Re-render automatically when store updates. No IndexedDB reads in the component.
 
@@ -299,13 +302,13 @@ Disable buttons when arrays are empty.
 
 1. Place client sample `.xlsx` under e.g. `Doc/samples/` (or project root — gitignore if large)
 2. Upload in UI
-3. Spot-check against screenshot rules:
-   - Orange "Need to Order" / "Under Observation" → pending
-   - Green "Issued from Inventory" / PK-xxxx → excluded
+3. Spot-check against **applied** rules:
+   - Status text containing `"resolve"` / `"resolved"` / … → **excluded**
+   - Status without `"resolve"` (any fill color, including green or orange) → **pending**
    - Qty uses Affected Qty
-   - Latest status column wins when multiple status dates exist
-4. Adjust `parserConfig.ts` color hex / keywords until matches expected pending count
-5. Document the expected pending count for that sample in a short comment in `parserConfig.ts`
+   - **2nd** status column left→right decides (not right-most / not by name)
+4. Document expected pending count for that sample if useful
+5. ~~Adjust color hex / keywords~~ — color no longer drives keep/drop
 
 **Done when:** sample file produces correct pending set and File B.
 
@@ -322,9 +325,10 @@ Disable buttons when arrays are empty.
 - [ ] Download Pending Excel opens correctly
 - [ ] Refresh page → data still present (IndexedDB)
 - [ ] Corrupt / non-Excel file → clear toast error, app does not crash
-- [ ] Sheet with only resolved (green) rows → empty pending + helpful empty state
+- [ ] Sheet with only `"resolve"` status rows → empty pending + helpful empty state
+- [ ] Green fill **without** resolve text still appears in Pending (text-only rule)
 
-**Phase 2 exit:** core intelligence works end-to-end with real File A. Phase 3 adds file list delete UX, Backup/Restore UI, polish, Vercel.
+**Phase 2 exit:** core intelligence works end-to-end with real File A. Phase 3 adds file list delete UX polish, deploy, user guide.
 
 ---
 

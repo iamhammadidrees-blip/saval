@@ -13,9 +13,10 @@ Details of filter/aggregation rules: `Doc/decision.md`, `Doc/logic-flow.md`.
 | Pending keep/drop | **Text only** — drop if status includes `"resolve"`; else keep | `dataProcessor.isPendingRow` |
 | Color | Still parsed into `PendingPart.color`; **not** used for keep/drop | `excelParser` + `toPendingParts` |
 | Removed from filter path | Color-first pending/resolved sets + `PENDING_KEYWORDS` / `RESOLVED_KEYWORDS` | was in older `dataProcessor` / docs |
-| Required grouping | Part No (or Name) **+ Model** (first 3 letters of Batch) | `aggregateRequired` |
-| Empty model label | Always **`UNKNOWN`** in Required / Models tables + File B / model Excel | `requiredModelLabel` |
+| Required grouping | **Part No. only** + Model (first 3 letters of Batch); rows with empty Part No. are **skipped** | `aggregateRequired` / `isMissingPartNumber` |
+| Empty model label | Always **`UNKNOWN`** in Merged / Models tables + File B / model Excel | `requiredModelLabel` |
 | Unique Parts | Separate aggregator by **Part No. only**; sum qty; skip empty Part No. | `aggregateUniqueParts` / `UniquePart` |
+| Undefined Rows | Pending rows with empty Part No.; indices shown on Total Pending card | `UndefinedRowsCard` / `isMissingPartNumber` |
 
 ---
 
@@ -23,13 +24,16 @@ Details of filter/aggregation rules: `Doc/decision.md`, `Doc/logic-flow.md`.
 
 | Feature | Behavior |
 |---------|----------|
+| Tabs (UI labels) | **Pending** · **Merged** (Required table) · **Models** · **Files Uploaded** |
 | Models tab | Dropdown of models, filtered Required table, per-model Excel download |
 | Unique Parts card | Count + **View** (dialog `DataTable`) + **Download** Excel |
+| Undefined Rows | Popover on Total Pending card — 1-based row indices with missing Part No. |
 | Files Uploaded tab | List + per-file delete (`window.confirm`) |
 | Exports | File B, Pending Excel, model Excel, Unique Parts Excel (`exportUtils`) |
-| Download placement (current) | File B + Download Pending live on **Models** search toolbar; Unique Download on Unique card; model download beside Models dropdown |
-| Header | Title “Pending Parts Dashboard”; last-updated / Loading / No data yet; **Backup** button present but **disabled** |
-| Summary cards order | Total Pending → Total Qty → Unique Parts → Files Uploaded |
+| Download placement (current) | **Download Pending** on Pending toolbar; **Download File B** on Merged toolbar; model download beside Models dropdown; Unique Download on Unique card |
+| Header | Title **Hold-Parts-Dashboard**; last-updated / Loading / No data yet; **Backup** / **Restore** / **Clear All** all wired |
+| Summary cards order | Total Pending (+ Undefined Rows) → Total Qty → Unique Parts → Files Uploaded |
+| Backup / Restore / Clear All | Backup → `exportSnapshot` JSON; Restore → file picker + `importSnapshot`; Clear All → Dialog confirm + `clearAll()` |
 
 ---
 
@@ -37,22 +41,22 @@ Details of filter/aggregation rules: `Doc/decision.md`, `Doc/logic-flow.md`.
 
 | Area | Applied approach |
 |------|------------------|
+| Theme | **Polished Bay** tokens in `app/globals.css` (silver / steel / ink / rust ring); page wash gradient |
 | Tab rail | Centered `max-w-xl` steel rail; charcoal active key + rust (`#C45C26`) 2px base-line; uppercase labels |
-| File dropzone | Centered `max-w-xl`; white→grey radial splash into page background |
-| Table headers | `pageStickyHeader` on Pending / Required / Models (sticks while page scrolls) |
+| File dropzone | Centered `max-w-xl`; white→recess radial (`#D5D9DE`) |
+| Table headers | Silver `bg-muted`; `pageStickyHeader` on Pending / Merged / Models |
 | Unique dialog table | Internal scroll + `stickyHeader` so column headers stay visible |
 | Search | Part No. only (`DataTable` globalFilterFn) |
-| Design previews | `Doc/ui-preview-silver.html` (Polished Bay demo); `preview/palette.html` (palette tokens, serve on :3001) |
+| Design previews | `Doc/ui-preview-silver.html` (Polished Bay demo); `preview/palette.html` (palette tokens) |
 
 ---
 
 ## Explicitly not applied / still open
 
-- Backup / Restore wiring (snapshot APIs may exist in IDB; UI Backup is disabled)
-- Clear All header UI
-- shadcn Dialog for file delete (still `window.confirm`)
+- File delete still uses `window.confirm` (prefer shadcn Dialog)
 - Vercel deploy + user guide README rewrite
-- Moving Download File / Download Pending onto Pending / Required toolbars (discussed; not in current tree)
+- Optional hydrate skeleton beyond header “Loading…”
+- Responsive tighten for summary cards on mobile
 
 ---
 
